@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Manager — Control Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0E1116;
+    --panel:#161B22;
+    --panel-2:#1D232C;
+    --line:#2A3140;
+    --text:#E7EAEE;
+    --muted:#8A93A3;
+    --amber:#E8A33D;
+    --amber-dim:#5A431E;
+    --teal:#5EEAD4;
+    --teal-dim:#1C3B36;
+    --red:#F0616A;
+    --red-dim:#3C1E22;
+    --blue:#6FA8FF;
+    --radius:8px;
+    --mono:'IBM Plex Mono', ui-monospace, monospace;
+    --sans:'Inter', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--ink);color:var(--text);font-family:var(--sans);}
+  ::selection{background:var(--amber-dim);color:#fff;}
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    display:flex;align-items:center;gap:16px;
+    padding:10px 20px;background:var(--panel);border-bottom:1px solid var(--line);
+    position:sticky;top:0;z-index:20;
+  }
+  .brand{font-family:var(--mono);font-weight:700;letter-spacing:.02em;font-size:14px;color:var(--text);display:flex;align-items:center;gap:8px;}
+  .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--amber);box-shadow:0 0 8px var(--amber);}
+  .conn{
+    display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--muted);
+    margin-left:6px;padding:4px 8px;border:1px solid var(--line);border-radius:999px;
+  }
+  .conn .led{width:7px;height:7px;border-radius:50%;background:var(--muted);}
+  .conn.ok .led{background:var(--teal);box-shadow:0 0 6px var(--teal);}
+  .conn.bad .led{background:var(--red);box-shadow:0 0 6px var(--red);}
+  .apiurl{
+    background:transparent;border:1px solid var(--line);color:var(--muted);font-family:var(--mono);
+    font-size:11px;padding:5px 8px;border-radius:6px;width:220px;
+  }
+  .apiurl:focus{outline:none;border-color:var(--amber);color:var(--text);}
+  .spacer{flex:1;}
+  .who{font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .who b{color:var(--text);}
+  .role-pill{
+    font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;
+    padding:2px 7px;border-radius:999px;border:1px solid var(--amber-dim);color:var(--amber);margin-left:6px;
+  }
+  .btn{
+    font-family:var(--sans);font-weight:600;font-size:13px;color:var(--ink);background:var(--amber);
+    border:none;padding:8px 14px;border-radius:6px;cursor:pointer;transition:filter .12s ease, transform .05s ease;
+  }
+  .btn:hover{filter:brightness(1.08);}
+  .btn:active{transform:translateY(1px);}
+  .btn.secondary{background:transparent;color:var(--text);border:1px solid var(--line);}
+  .btn.secondary:hover{border-color:var(--amber);color:var(--amber);}
+  .btn.danger{background:var(--red);color:#1a0b0c;}
+  .btn.small{padding:5px 10px;font-size:12px;}
+  .btn:disabled{opacity:.45;cursor:not-allowed;filter:none;}
+
+  /* ---------- layout ---------- */
+  .layout{display:flex;min-height:calc(100vh - 49px);}
+  .sidebar{
+    width:210px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--line);
+    padding:16px 10px;display:flex;flex-direction:column;gap:2px;
+  }
+  .nav-item{
+    display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:6px;color:var(--muted);
+    font-size:13px;font-weight:600;cursor:pointer;user-select:none;
+  }
+  .nav-item:hover{background:var(--panel-2);color:var(--text);}
+  .nav-item.active{background:var(--amber-dim);color:var(--amber);}
+  .nav-item .idx{font-family:var(--mono);font-size:10px;opacity:.7;width:16px;}
+  .main{flex:1;padding:26px 32px;max-width:980px;}
+
+  h1{font-family:var(--mono);font-size:20px;font-weight:700;margin:0 0 4px;letter-spacing:-0.01em;}
+  h2{font-family:var(--mono);font-size:15px;font-weight:600;margin:0 0 12px;color:var(--text);}
+  .subtitle{color:var(--muted);font-size:13px;margin:0 0 24px;}
+
+  /* ---------- cards / panels ---------- */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px;}
+  .grid{display:grid;gap:14px;}
+  .grid.cols-3{grid-template-columns:repeat(3,1fr);}
+  .grid.cols-2{grid-template-columns:repeat(2,1fr);}
+  @media(max-width:760px){.grid.cols-3,.grid.cols-2{grid-template-columns:1fr;} .sidebar{display:none;}}
+
+  .stat{border-left:3px solid var(--amber);padding:4px 0 4px 12px;}
+  .stat .n{font-family:var(--mono);font-size:26px;font-weight:700;line-height:1;}
+  .stat .l{color:var(--muted);font-size:12px;margin-top:4px;}
+  .stat.warn{border-color:var(--red);}
+  .stat.warn .n{color:var(--red);}
+  .stat.good{border-color:var(--teal);}
+
+  .list{display:flex;flex-direction:column;gap:10px;margin-top:14px;}
+  .row-card{
+    background:var(--panel-2);border:1px solid var(--line);border-left:3px solid var(--line);
+    border-radius:6px;padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;
+    transition:border-color .12s ease;
+  }
+  .row-card:hover{border-color:var(--amber);}
+  .row-card .main-txt{flex:1;min-width:0;}
+  .row-card .title{font-weight:600;font-size:14px;}
+  .row-card .meta{color:var(--muted);font-size:12px;margin-top:2px;font-family:var(--mono);}
+
+  .status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .status-dot.todo{background:var(--muted);}
+  .status-dot.in_progress{background:var(--blue);box-shadow:0 0 6px var(--blue);}
+  .status-dot.done{background:var(--teal);box-shadow:0 0 6px var(--teal);}
+  .row-card.overdue{border-left-color:var(--red);}
+
+  .badge{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:999px;}
+  .badge.low{background:var(--panel);color:var(--muted);border:1px solid var(--line);}
+  .badge.medium{background:var(--amber-dim);color:var(--amber);}
+  .badge.high{background:var(--red-dim);color:var(--red);}
+
+  select, input[type=text], input[type=email], input[type=password], input[type=datetime-local], textarea{
+    background:var(--ink);border:1px solid var(--line);color:var(--text);border-radius:6px;
+    padding:8px 10px;font-family:var(--sans);font-size:13px;width:100%;
+  }
+  select:focus, input:focus, textarea:focus{outline:none;border-color:var(--amber);}
+  label{display:block;font-size:11px;color:var(--muted);margin:10px 0 4px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;}
+  form .btn{margin-top:14px;}
+
+  .tabs{display:flex;gap:4px;margin-bottom:18px;border-bottom:1px solid var(--line);}
+  .tab{padding:8px 14px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;}
+  .tab.active{color:var(--amber);border-color:var(--amber);}
+
+  .msg{font-size:12px;padding:8px 10px;border-radius:6px;margin-top:10px;font-family:var(--mono);}
+  .msg.error{background:var(--red-dim);color:var(--red);}
+  .msg.ok{background:var(--teal-dim);color:var(--teal);}
+  .empty{color:var(--muted);font-size:13px;padding:20px;text-align:center;border:1px dashed var(--line);border-radius:8px;}
+
+  /* ---------- auth screen ---------- */
+  .auth-wrap{min-height:calc(100vh - 49px);display:flex;align-items:center;justify-content:center;padding:20px;}
+  .auth-card{width:380px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:26px;}
+  .auth-card h1{margin-bottom:2px;}
+
+  .back-link{color:var(--muted);font-size:12px;cursor:pointer;font-family:var(--mono);margin-bottom:14px;display:inline-block;}
+  .back-link:hover{color:var(--amber);}
+
+  .member-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--panel-2);border-radius:6px;margin-bottom:6px;}
+  .member-row .name{font-size:13px;font-weight:600;}
+  .member-row .r{font-family:var(--mono);font-size:11px;color:var(--muted);}
+
+  .inline-form{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:12px;}
+  .inline-form > div{flex:1;min-width:140px;}
+  .inline-form label{margin-top:0;}
+
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="dot"></span> TASKCTL</div>
+  <div class="conn" id="connIndicator"><span class="led"></span><span id="connLabel">checking…</span></div>
+  <div class="spacer"></div>
+  <div class="who hidden" id="whoBox"></div>
+  <button class="btn secondary small hidden" id="logoutBtn">Log out</button>
+</div>
+
+<!-- AUTH SCREEN -->
+<div class="auth-wrap" id="authScreen">
+  <div class="auth-card">
+    <h1>Sign in</h1>
+    <p class="subtitle">Connect to your Task Manager API</p>
+    <div class="tabs">
+      <div class="tab active" data-authtab="login">Log in</div>
+      <div class="tab" data-authtab="signup">Sign up</div>
+    </div>
+
+    <form id="loginForm">
+      <label>Username</label>
+      <input type="text" id="loginUsername" required autocomplete="username">
+      <label>Password</label>
+      <input type="password" id="loginPassword" required autocomplete="current-password">
+      <button class="btn" type="submit" style="width:100%">Log in</button>
+      <div class="msg hidden" id="loginMsg"></div>
+    </form>
+
+    <form id="signupForm" class="hidden">
+      <label>Username</label>
+      <input type="text" id="suUsername" required>
+      <label>Email</label>
+      <input type="email" id="suEmail" required>
+      <label>Password</label>
+      <input type="password" id="suPassword" required>
+      <label>Confirm password</label>
+      <input type="password" id="suPassword2" required>
+      <label>Admin invite code (optional)</label>
+      <input type="password" id="suAdminCode" placeholder="Leave blank to sign up as a member" autocomplete="off">
+      <button class="btn" type="submit" style="width:100%">Create account</button>
+      <div class="msg hidden" id="signupMsg"></div>
+    </form>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="layout hidden" id="appLayout">
+  <div class="sidebar">
+    <div class="nav-item active" data-view="dashboard"><span class="idx">01</span> Dashboard</div>
+    <div class="nav-item" data-view="projects"><span class="idx">02</span> Projects</div>
+    <div class="nav-item" data-view="messages"><span class="idx">03</span> Messages</div>
+  </div>
+
+  <div class="main">
+
+    <!-- DASHBOARD VIEW -->
+    <div id="view-dashboard">
+      <h1>Dashboard</h1>
+      <p class="subtitle">Your work, at a glance</p>
+      <div class="grid cols-3" id="statGrid"></div>
+
+      <div style="margin-top:26px" class="grid cols-2">
+        <div class="card" >
+          <h2>Overdue — yours</h2>
+          <div class="list" id="myOverdueList"></div>
+        </div>
+        <div class="card">
+          <h2>Upcoming — yours</h2>
+          <div class="list" id="myUpcomingList"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <h2>Projects breakdown</h2>
+        <div class="list" id="projBreakdownList"></div>
+      </div>
+    </div>
+
+    <!-- PROJECTS LIST VIEW -->
+    <div id="view-projects" class="hidden">
+      <h1>Projects</h1>
+      <p class="subtitle">Everything you're a member of</p>
+
+      <div class="card" id="newProjectCard">
+        <h2>New project</h2>
+        <form id="createProjectForm">
+          <div class="inline-form">
+            <div><label>Name</label><input type="text" id="npName" required></div>
+            <div><label>Description</label><input type="text" id="npDesc"></div>
+            <button class="btn" type="submit">Create</button>
+          </div>
+        </form>
+        <div class="msg hidden" id="createProjectMsg"></div>
+      </div>
+
+      <div class="list" id="projectsList" style="margin-top:18px"></div>
+    </div>
+
+    <!-- PROJECT DETAIL VIEW -->
+    <div id="view-project-detail" class="hidden">
+      <span class="back-link" id="backToProjects">&larr; all projects</span>
+      <h1 id="pdName">Project</h1>
+      <p class="subtitle" id="pdDesc"></p>
+
+      <div class="tabs">
+        <div class="tab active" data-pdtab="tasks">Tasks</div>
+        <div class="tab" data-pdtab="submission">Submission</div>
+        <div class="tab" data-pdtab="chat">Chat</div>
+        <div class="tab" data-pdtab="members">Members</div>
+      </div>
+
+      <div id="pd-tasks">
+        <div class="card hidden" id="createTaskCard">
+          <h2>New task</h2>
+          <form id="createTaskForm">
+            <div class="inline-form">
+              <div><label>Title</label><input type="text" id="ntTitle" required></div>
+              <div><label>Assign to</label><select id="ntAssignee"></select></div>
+            </div>
+            <div class="inline-form">
+              <div><label>Priority</label>
+                <select id="ntPriority">
+                  <option value="low">Low</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+              <div><label>Due date</label><input type="datetime-local" id="ntDue"></div>
+              <button class="btn" type="submit">Add task</button>
+            </div>
+            <label>Description</label>
+            <textarea id="ntDesc" rows="2"></textarea>
+          </form>
+          <div class="msg hidden" id="createTaskMsg"></div>
+        </div>
+
+        <div class="list" id="tasksList" style="margin-top:14px"></div>
+      </div>
+
+      <div id="pd-submission" class="hidden">
+        <div class="card">
+          <h2>Your submission</h2>
+          <form id="submissionForm">
+            <label>File (optional, up to 1GB)</label>
+            <input type="file" id="subFile">
+            <div id="subExistingFile" class="meta" style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:6px;"></div>
+            <div class="inline-form">
+              <div><label>GitHub / repo link</label><input type="text" id="subRepo" placeholder="https://github.com/you/project"></div>
+              <div><label>Live link (optional)</label><input type="text" id="subLive" placeholder="https://your-demo.app"></div>
+            </div>
+            <label>Description</label>
+            <textarea id="subDesc" rows="3" placeholder="What did you build/change?"></textarea>
+            <button class="btn" type="submit">Save submission</button>
+            <span id="subUploading" class="msg ok hidden">Uploading…</span>
+          </form>
+          <div class="msg hidden" id="submissionMsg"></div>
+        </div>
+
+        <div class="card" style="margin-top:14px">
+          <h2>All submissions in this project</h2>
+          <div class="list" id="submissionsList"></div>
+        </div>
+      </div>
+
+      <div id="pd-chat" class="hidden">
+        <div class="card">
+          <h2>Project chat</h2>
+          <div class="list" id="projectChatList" style="max-height:420px;overflow-y:auto;"></div>
+          <form id="projectChatForm" class="inline-form" style="margin-top:12px">
+            <div style="flex:3"><input type="text" id="projectChatInput" placeholder="Message the project team…" autocomplete="off" required></div>
+            <button class="btn" type="submit">Send</button>
+          </form>
+        </div>
+      </div>
+
+      <div id="pd-members" class="hidden">
+        <div class="card hidden" id="addMemberCard">
+          <h2>Add member</h2>
+          <div class="inline-form">
+            <div><label>User</label><select id="amUser"></select></div>
+            <div><label>Role</label>
+              <select id="amRole"><option value="member">Member</option><option value="admin">Admin</option></select>
+            </div>
+            <button class="btn" id="addMemberBtn">Add</button>
+          </div>
+          <div class="msg hidden" id="addMemberMsg"></div>
+        </div>
+        <div class="list" id="membersList" style="margin-top:14px"></div>
+      </div>
+    </div>
+
+    <!-- MESSAGES VIEW -->
+    <div id="view-messages" class="hidden">
+      <h1>Messages</h1>
+      <p class="subtitle">Message anyone in the system directly</p>
+
+      <div class="grid cols-2" style="align-items:start;grid-template-columns:260px 1fr;">
+        <div class="card">
+          <h2>Start a chat</h2>
+          <select id="dmUserPicker" style="margin-bottom:10px"></select>
+          <button class="btn secondary small" id="dmStartBtn" style="width:100%">Open chat</button>
+          <h2 style="margin-top:18px">Conversations</h2>
+          <div class="list" id="conversationsList"></div>
+        </div>
+
+        <div class="card">
+          <h2 id="dmWithName">Select a conversation</h2>
+          <div class="list" id="dmMessageList" style="max-height:420px;overflow-y:auto;"></div>
+          <form id="dmForm" class="inline-form hidden" style="margin-top:12px">
+            <div style="flex:3"><input type="text" id="dmInput" placeholder="Type a message…" autocomplete="off" required></div>
+            <button class="btn" type="submit">Send</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   STATE
+   ============================================================ */
+const state = {
+  apiBase: window.location.origin,
+  access: localStorage.getItem('tc_access') || null,
+  refresh: localStorage.getItem('tc_refresh') || null,
+  user: JSON.parse(localStorage.getItem('tc_user') || 'null'),
+  users: [],
+  projects: [],
+  currentProject: null,
+};
+
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+/* ============================================================
+   API HELPER
+   ============================================================ */
+async function api(path, { method = 'GET', body, auth = true, retry = true, isForm = false } = {}) {
+  const headers = {};
+  if (!isForm) headers['Content-Type'] = 'application/json';
+  if (auth && state.access) headers['Authorization'] = 'Bearer ' + state.access;
+
+  const res = await fetch(state.apiBase.replace(/\/$/, '') + path, {
+    method,
+    headers,
+    body: body ? (isForm ? body : JSON.stringify(body)) : undefined,
+  });
+
+  if (res.status === 401 && auth) {
+    if (retry && state.refresh) {
+      const refreshed = await tryRefreshToken();
+      if (refreshed) return api(path, { method, body, auth, retry: false, isForm });
+    }
+    // Access token invalid/expired AND refresh didn't work (or there's
+    // no refresh token at all) -- this session is unrecoverable.
+    // Clear the stale credentials and bounce back to the login screen
+    // instead of leaving every panel silently showing a raw API error.
+    forceLogout('Your session expired. Please log in again.');
+    throw new Error('Session expired.');
+  }
+
+  let data = null;
+  try { data = await res.json(); } catch (e) { /* no body */ }
+
+  if (!res.ok) {
+    const err = new Error((data && (data.detail || JSON.stringify(data))) || `HTTP ${res.status}`);
+    err.status = res.status;
+    err.data = data;
+    throw err;
+  }
+  return data;
+}
+
+function forceLogout(message) {
+  ['tc_access', 'tc_refresh', 'tc_user'].forEach(k => localStorage.removeItem(k));
+  state.access = null; state.refresh = null; state.user = null;
+  if (message) {
+    try { sessionStorage.setItem('tc_logout_message', message); } catch (e) {}
+  }
+  location.reload();
+}
+
+async function tryRefreshToken() {
+  try {
+    const res = await fetch(state.apiBase.replace(/\/$/, '') + '/api/auth/login/refresh/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh: state.refresh }),
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    state.access = data.access;
+    localStorage.setItem('tc_access', state.access);
+    return true;
+  } catch (e) { return false; }
+}
+
+/* ============================================================
+   CONNECTION INDICATOR
+   ============================================================ */
+async function checkConnection() {
+  const el = $('#connIndicator');
+  const label = $('#connLabel');
+  try {
+    const res = await fetch(state.apiBase.replace(/\/$/, '') + '/health/');
+    if (res.ok) {
+      el.className = 'conn ok'; label.textContent = 'connected';
+    } else { throw new Error(); }
+  } catch (e) {
+    el.className = 'conn bad'; label.textContent = 'unreachable';
+  }
+}
+
+/* ============================================================
+   AUTH SCREEN LOGIC
+   ============================================================ */
+$$('[data-authtab]').forEach(tab => {
+  tab.addEventListener('click', () => {
+    $$('[data-authtab]').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const which = tab.dataset.authtab;
+    $('#loginForm').classList.toggle('hidden', which !== 'login');
+    $('#signupForm').classList.toggle('hidden', which !== 'signup');
+  });
+});
+
+function showMsg(el, text, kind) {
+  el.textContent = text;
+  el.className = 'msg ' + kind;
+}
+
+$('#loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = $('#loginMsg');
+  msg.classList.add('hidden');
+  try {
+    const data = await api('/api/auth/login/', {
+      method: 'POST', auth: false,
+      body: { username: $('#loginUsername').value, password: $('#loginPassword').value },
+    });
+    state.access = data.access; state.refresh = data.refresh; state.user = data.user;
+    localStorage.setItem('tc_access', state.access);
+    localStorage.setItem('tc_refresh', state.refresh);
+    localStorage.setItem('tc_user', JSON.stringify(state.user));
+    enterApp();
+  } catch (err) {
+    showMsg(msg, err.message || 'Login failed', 'error');
+  }
+});
+
+$('#signupForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = $('#signupMsg');
+  msg.classList.add('hidden');
+  const pw = $('#suPassword').value, pw2 = $('#suPassword2').value;
+  if (pw !== pw2) { showMsg(msg, 'Passwords do not match', 'error'); return; }
+  try {
+    await api('/api/auth/signup/', {
+      method: 'POST', auth: false,
+      body: {
+        username: $('#suUsername').value, email: $('#suEmail').value,
+        password: pw, password2: pw2, admin_code: $('#suAdminCode').value,
+      },
+    });
+    showMsg(msg, 'Account created — logging you in…', 'ok');
+    const data = await api('/api/auth/login/', {
+      method: 'POST', auth: false,
+      body: { username: $('#suUsername').value, password: pw },
+    });
+    state.access = data.access; state.refresh = data.refresh; state.user = data.user;
+    localStorage.setItem('tc_access', state.access);
+    localStorage.setItem('tc_refresh', state.refresh);
+    localStorage.setItem('tc_user', JSON.stringify(state.user));
+    enterApp();
+  } catch (err) {
+    showMsg(msg, err.message || 'Signup failed', 'error');
+  }
+});
+
+$('#logoutBtn').addEventListener('click', () => forceLogout());
+
+/* ============================================================
+   NAV
+   ============================================================ */
+$$('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    $$('.nav-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+    showView(item.dataset.view);
+  });
+});
+
+function showView(name) {
+  ['dashboard', 'projects', 'project-detail', 'messages'].forEach(v => {
+    $('#view-' + v).classList.toggle('hidden', v !== name);
+  });
+  if (name === 'dashboard') loadDashboard();
+  if (name === 'projects') loadProjects();
+  if (name === 'messages') loadMessagesView();
+}
+
+/* ============================================================
+   ENTER APP
+   ============================================================ */
+async function enterApp() {
+  $('#authScreen').classList.add('hidden');
+  $('#appLayout').classList.remove('hidden');
+  $('#whoBox').classList.remove('hidden');
+  $('#logoutBtn').classList.remove('hidden');
+  $('#whoBox').innerHTML = `<b>${escapeHtml(state.user.username)}</b><span class="role-pill">${state.user.role}</span>`;
+  try { const u = await api('/api/auth/users/'); state.users = u.results || u; } catch(e){}
+  showView('dashboard');
+}
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { month:'short', day:'numeric' }) + ' ' + d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+}
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+async function loadDashboard() {
+  $('#statGrid').innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const d = await api('/api/dashboard/');
+    const s = d.summary;
+    $('#statGrid').innerHTML = `
+      <div class="card stat"><div class="n">${s.total_projects}</div><div class="l">Projects</div></div>
+      <div class="card stat"><div class="n">${s.my_total_tasks}</div><div class="l">My tasks</div></div>
+      <div class="card stat warn"><div class="n">${s.my_overdue_count}</div><div class="l">Overdue (mine)</div></div>
+    `;
+    $('#myOverdueList').innerHTML = renderTaskBriefs(d.my_overdue_tasks, true) || '<div class="empty">Nothing overdue 🎉</div>';
+    $('#myUpcomingList').innerHTML = renderTaskBriefs(d.my_upcoming_tasks, false) || '<div class="empty">Nothing upcoming</div>';
+    $('#projBreakdownList').innerHTML = d.projects.map(p => `
+      <div class="row-card" style="cursor:default">
+        <div class="main-txt">
+          <div class="title">${escapeHtml(p.project_name)}</div>
+          <div class="meta">${p.total_tasks} tasks · todo ${p.status_counts.todo||0} · in progress ${p.status_counts.in_progress||0} · done ${p.status_counts.done||0}</div>
+        </div>
+        ${p.overdue_count > 0 ? `<span class="badge high">${p.overdue_count} overdue</span>` : ''}
+      </div>
+    `).join('') || '<div class="empty">No projects yet</div>';
+  } catch (err) {
+    $('#statGrid').innerHTML = `<div class="msg error">${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function renderTaskBriefs(list, overdue) {
+  return (list || []).map(t => `
+    <div class="row-card ${overdue ? 'overdue' : ''}" style="cursor:default">
+      <span class="status-dot ${t.status}"></span>
+      <div class="main-txt">
+        <div class="title">${escapeHtml(t.title)}</div>
+        <div class="meta">${escapeHtml(t.project)} · due ${fmtDate(t.due_date)}</div>
+      </div>
+      <span class="badge ${t.priority}">${t.priority}</span>
+    </div>
+  `).join('');
+}
+
+/* ============================================================
+   PROJECTS LIST
+   ============================================================ */
+async function loadProjects() {
+  $('#newProjectCard').classList.toggle('hidden', state.user.role !== 'admin');
+  $('#projectsList').innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const data = await api('/api/projects/');
+    state.projects = data.results || data;
+    $('#projectsList').innerHTML = state.projects.map(p => `
+      <div class="row-card" data-projid="${p.id}">
+        <div class="main-txt">
+          <div class="title">${escapeHtml(p.name)}</div>
+          <div class="meta">${p.member_count} members · ${p.task_count} tasks · you: ${p.my_role}</div>
+        </div>
+      </div>
+    `).join('') || '<div class="empty">No projects yet — create one above.</div>';
+    $$('#projectsList [data-projid]').forEach(el => {
+      el.addEventListener('click', () => openProject(parseInt(el.dataset.projid)));
+    });
+  } catch (err) {
+    $('#projectsList').innerHTML = `<div class="msg error">${escapeHtml(err.message)}</div>`;
+  }
+}
+
+$('#createProjectForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = $('#createProjectMsg');
+  msg.classList.add('hidden');
+  try {
+    await api('/api/projects/', {
+      method: 'POST',
+      body: { name: $('#npName').value, description: $('#npDesc').value },
+    });
+    $('#npName').value = ''; $('#npDesc').value = '';
+    loadProjects();
+  } catch (err) {
+    showMsg(msg, err.message || 'Could not create project', 'error');
+  }
+});
+
+/* ============================================================
+   PROJECT DETAIL
+   ============================================================ */
+async function openProject(id) {
+  $$('.nav-item').forEach(i => i.classList.remove('active'));
+  ['dashboard', 'projects', 'project-detail'].forEach(v => {
+    $('#view-' + v).classList.toggle('hidden', v !== 'project-detail');
+  });
+  try {
+    const p = await api(`/api/projects/${id}/`);
+    state.currentProject = p;
+    $('#pdName').textContent = p.name;
+    $('#pdDesc').textContent = p.description || 'No description';
+    const isAdmin = p.my_role === 'admin';
+    $('#createTaskCard').classList.toggle('hidden', !isAdmin);
+    $('#addMemberCard').classList.toggle('hidden', !isAdmin);
+    populateAssigneeSelect(p.memberships || []);
+    populateUserPicker(p.memberships || []);
+    switchPdTab('tasks');
+    loadTasks(id);
+    renderMembers(p.memberships || []);
+  } catch (err) {
+    alert('Could not open project: ' + err.message);
+  }
+}
+
+$('#backToProjects').addEventListener('click', () => { stopProjectChatPolling(); showView('projects'); });
+
+$$('[data-pdtab]').forEach(tab => {
+  tab.addEventListener('click', () => switchPdTab(tab.dataset.pdtab));
+});
+function switchPdTab(which) {
+  $$('[data-pdtab]').forEach(t => t.classList.toggle('active', t.dataset.pdtab === which));
+  $('#pd-tasks').classList.toggle('hidden', which !== 'tasks');
+  $('#pd-submission').classList.toggle('hidden', which !== 'submission');
+  $('#pd-chat').classList.toggle('hidden', which !== 'chat');
+  $('#pd-members').classList.toggle('hidden', which !== 'members');
+
+  stopProjectChatPolling();
+  if (which === 'submission') loadSubmissions();
+  if (which === 'chat') { loadProjectChat(); startProjectChatPolling(); }
+}
+
+function populateAssigneeSelect(memberships) {
+  const sel = $('#ntAssignee');
+  sel.innerHTML = '<option value="">Unassigned</option>' +
+    memberships.map(m => `<option value="${m.user.id}">${escapeHtml(m.user.username)}</option>`).join('');
+}
+function populateUserPicker(memberships) {
+  const existingIds = new Set(memberships.map(m => m.user.id));
+  const sel = $('#amUser');
+  const candidates = state.users.filter(u => !existingIds.has(u.id));
+  sel.innerHTML = candidates.map(u => `<option value="${u.id}">${escapeHtml(u.username)} (${u.role})</option>`).join('') ||
+    '<option value="">No other users</option>';
+}
+
+async function loadTasks(projectId) {
+  $('#tasksList').innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const data = await api(`/api/tasks/?project=${projectId}`);
+    const tasks = data.results || data;
+    const isAdmin = state.currentProject.my_role === 'admin';
+    $('#tasksList').innerHTML = tasks.map(t => `
+      <div class="row-card ${t.is_overdue ? 'overdue' : ''}" style="cursor:default">
+        <span class="status-dot ${t.status}"></span>
+        <div class="main-txt">
+          <div class="title">${escapeHtml(t.title)}</div>
+          <div class="meta">
+            ${t.assigned_to ? '@' + escapeHtml(t.assigned_to.username) : 'unassigned'}
+            ${t.due_date ? ' · due ' + fmtDate(t.due_date) : ''}
+            ${t.is_overdue ? ' · <span style="color:var(--red)">OVERDUE</span>' : ''}
+          </div>
+        </div>
+        <span class="badge ${t.priority}">${t.priority}</span>
+        ${canEditTask(t, isAdmin) ? `
+          <select data-taskid="${t.id}" class="statusSelect" style="width:auto">
+            <option value="todo" ${t.status==='todo'?'selected':''}>To do</option>
+            <option value="in_progress" ${t.status==='in_progress'?'selected':''}>In progress</option>
+            <option value="done" ${t.status==='done'?'selected':''}>Done</option>
+          </select>` : ''}
+        ${isAdmin ? `<button class="btn danger small" data-deltask="${t.id}">Delete</button>` : ''}
+      </div>
+    `).join('') || '<div class="empty">No tasks yet.</div>';
+
+    $$('.statusSelect').forEach(sel => {
+      sel.addEventListener('change', async () => {
+        try {
+          await api(`/api/tasks/${sel.dataset.taskid}/`, { method: 'PATCH', body: { status: sel.value } });
+          loadTasks(projectId);
+        } catch (err) { alert('Update failed: ' + err.message); }
+      });
+    });
+    $$('[data-deltask]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Delete this task?')) return;
+        try {
+          await api(`/api/tasks/${btn.dataset.deltask}/`, { method: 'DELETE' });
+          loadTasks(projectId);
+        } catch (err) { alert('Delete failed: ' + err.message); }
+      });
+    });
+  } catch (err) {
+    $('#tasksList').innerHTML = `<div class="msg error">${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function canEditTask(t, isAdmin) {
+  if (isAdmin) return true;
+  return t.assigned_to && t.assigned_to.id === state.user.id;
+}
+
+$('#createTaskForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = $('#createTaskMsg');
+  msg.classList.add('hidden');
+  const due = $('#ntDue').value;
+  try {
+    await api('/api/tasks/', {
+      method: 'POST',
+      body: {
+        project: state.currentProject.id,
+        title: $('#ntTitle').value,
+        description: $('#ntDesc').value,
+        priority: $('#ntPriority').value,
+        assigned_to_id: $('#ntAssignee').value || null,
+        due_date: due ? new Date(due).toISOString() : null,
+      },
+    });
+    $('#ntTitle').value = ''; $('#ntDesc').value = ''; $('#ntDue').value = '';
+    loadTasks(state.currentProject.id);
+  } catch (err) {
+    showMsg(msg, err.message || 'Could not create task', 'error');
+  }
+});
+
+function renderMembers(memberships) {
+  $('#membersList').innerHTML = memberships.map(m => `
+    <div class="member-row">
+      <div class="name">${escapeHtml(m.user.username)} <span style="color:var(--muted);font-weight:400">${escapeHtml(m.user.email)}</span></div>
+      <span class="r">${m.role}</span>
+    </div>
+  `).join('') || '<div class="empty">No members</div>';
+}
+
+$('#addMemberBtn').addEventListener('click', async (e) => {
+  e.preventDefault();
+  const msg = $('#addMemberMsg');
+  msg.classList.add('hidden');
+  const userId = $('#amUser').value;
+  if (!userId) { showMsg(msg, 'No user selected', 'error'); return; }
+  try {
+    await api(`/api/projects/${state.currentProject.id}/members/`, {
+      method: 'POST',
+      body: { user_id: parseInt(userId), role: $('#amRole').value },
+    });
+    const p = await api(`/api/projects/${state.currentProject.id}/`);
+    state.currentProject = p;
+    populateAssigneeSelect(p.memberships || []);
+    populateUserPicker(p.memberships || []);
+    renderMembers(p.memberships || []);
+  } catch (err) {
+    showMsg(msg, err.message || 'Could not add member', 'error');
+  }
+});
+
+/* ============================================================
+   SUBMISSIONS
+   ============================================================ */
+async function loadSubmissions() {
+  const project = state.currentProject;
+  $('#submissionsList').innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const subs = await api(`/api/submissions/?project=${project.id}`);
+    const mine = subs.find(s => s.member.id === state.user.id);
+    if (mine) {
+      $('#subRepo').value = mine.repo_link || '';
+      $('#subLive').value = mine.live_link || '';
+      $('#subDesc').value = mine.description || '';
+      $('#subExistingFile').textContent = mine.file_name ? `Current file: ${mine.file_name}` : 'No file uploaded yet.';
+    } else {
+      $('#subExistingFile').textContent = 'No file uploaded yet.';
+    }
+    $('#submissionsList').innerHTML = subs.map(s => `
+      <div class="row-card" style="cursor:default;align-items:flex-start;">
+        <div class="main-txt">
+          <div class="title">${escapeHtml(s.member.username)}</div>
+          <div class="meta">
+            ${s.repo_link ? `<a href="${escapeHtml(s.repo_link)}" target="_blank" style="color:var(--blue)">repo</a>` : 'no repo link'}
+            ${s.live_link ? ` · <a href="${escapeHtml(s.live_link)}" target="_blank" style="color:var(--teal)">live demo</a>` : ''}
+            ${s.file_url ? ` · <a href="${escapeHtml(s.file_url)}" target="_blank" style="color:var(--amber)">download ${escapeHtml(s.file_name || 'file')}</a>` : ''}
+          </div>
+          ${s.description ? `<div style="margin-top:6px;font-size:13px;">${escapeHtml(s.description)}</div>` : ''}
+          <div class="meta" style="margin-top:4px">updated ${fmtDate(s.updated_at)}</div>
+        </div>
+      </div>
+    `).join('') || '<div class="empty">No one has submitted anything yet.</div>';
+  } catch (err) {
+    $('#submissionsList').innerHTML = `<div class="msg error">${escapeHtml(err.message)}</div>`;
+  }
+}
+
+$('#submissionForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = $('#submissionMsg');
+  msg.classList.add('hidden');
+  const fd = new FormData();
+  fd.append('project', state.currentProject.id);
+  fd.append('repo_link', $('#subRepo').value);
+  fd.append('live_link', $('#subLive').value);
+  fd.append('description', $('#subDesc').value);
+  const fileInput = $('#subFile');
+  if (fileInput.files[0]) fd.append('file', fileInput.files[0]);
+
+  $('#subUploading').classList.remove('hidden');
+  try {
+    await api('/api/submissions/', { method: 'POST', body: fd, isForm: true });
+    $('#subUploading').classList.add('hidden');
+    fileInput.value = '';
+    showMsg(msg, 'Submission saved.', 'ok');
+    loadSubmissions();
+  } catch (err) {
+    $('#subUploading').classList.add('hidden');
+    showMsg(msg, err.message || 'Could not save submission', 'error');
+  }
+});
+
+/* ============================================================
+   PROJECT CHAT
+   ============================================================ */
+let projectChatPollHandle = null;
+
+function startProjectChatPolling() {
+  stopProjectChatPolling();
+  projectChatPollHandle = setInterval(loadProjectChat, 4000);
+}
+function stopProjectChatPolling() {
+  if (projectChatPollHandle) { clearInterval(projectChatPollHandle); projectChatPollHandle = null; }
+}
+
+async function loadProjectChat() {
+  const project = state.currentProject;
+  if (!project) return;
+  try {
+    const data = await api(`/api/chat/project-messages/?project=${project.id}`);
+    const messages = data.results || data;
+    const list = $('#projectChatList');
+    const wasAtBottom = list.scrollTop + list.clientHeight >= list.scrollHeight - 20;
+    list.innerHTML = messages.map(m => renderChatBubble(m.sender, m.content, m.created_at)).join('') ||
+      '<div class="empty">No messages yet — say hi.</div>';
+    if (wasAtBottom) list.scrollTop = list.scrollHeight;
+  } catch (err) {
+    $('#projectChatList').innerHTML = `<div class="msg error">${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function renderChatBubble(sender, content, createdAt) {
+  const mine = sender.id === state.user.id;
+  return `
+    <div class="row-card" style="cursor:default;border-left-color:${mine ? 'var(--amber)' : 'var(--line)'};">
+      <div class="main-txt">
+        <div class="meta">${escapeHtml(sender.username)} · ${fmtDate(createdAt)}</div>
+        <div style="margin-top:2px;font-size:13px;">${escapeHtml(content)}</div>
+      </div>
+    </div>
+  `;
+}
+
+$('#projectChatForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const input = $('#projectChatInput');
+  const content = input.value.trim();
+  if (!content) return;
+  input.value = '';
+  try {
+    await api('/api/chat/project-messages/', {
+      method: 'POST',
+      body: { project: state.currentProject.id, content },
+    });
+    loadProjectChat();
+  } catch (err) {
+    alert('Could not send message: ' + err.message);
+  }
+});
+
+/* ============================================================
+   DIRECT MESSAGES
+   ============================================================ */
+let dmPollHandle = null;
+let dmCurrentUserId = null;
+
+function stopDmPolling() {
+  if (dmPollHandle) { clearInterval(dmPollHandle); dmPollHandle = null; }
+}
+
+async function loadMessagesView() {
+  stopDmPolling();
+  dmCurrentUserId = null;
+  $('#dmWithName').textContent = 'Select a conversation';
+  $('#dmMessageList').innerHTML = '';
+  $('#dmForm').classList.add('hidden');
+
+  const picker = $('#dmUserPicker');
+  picker.innerHTML = state.users
+    .filter(u => u.id !== state.user.id)
+    .map(u => `<option value="${u.id}">${escapeHtml(u.username)} (${u.role})</option>`).join('');
+
+  loadConversations();
+}
+
+async function loadConversations() {
+  try {
+    const convos = await api('/api/chat/conversations/');
+    $('#conversationsList').innerHTML = convos.map(c => `
+      <div class="row-card" data-dmuser="${c.user.id}" data-dmname="${escapeHtml(c.user.username)}">
+        <div class="main-txt">
+          <div class="title">${escapeHtml(c.user.username)} ${c.unread_count > 0 ? `<span class="badge high">${c.unread_count} new</span>` : ''}</div>
+          <div class="meta">${escapeHtml(c.last_message).slice(0, 60)}</div>
+        </div>
+      </div>
+    `).join('') || '<div class="empty">No conversations yet</div>';
+    $$('#conversationsList [data-dmuser]').forEach(el => {
+      el.addEventListener('click', () => openDmThread(parseInt(el.dataset.dmuser), el.dataset.dmname));
+    });
+  } catch (err) {
+    $('#conversationsList').innerHTML = `<div class="msg error">${escapeHtml(err.message)}</div>`;
+  }
+}
+
+$('#dmStartBtn').addEventListener('click', () => {
+  const picker = $('#dmUserPicker');
+  if (!picker.value) return;
+  openDmThread(parseInt(picker.value), picker.options[picker.selectedIndex].text);
+});
+
+function openDmThread(userId, username) {
+  dmCurrentUserId = userId;
+  $('#dmWithName').textContent = username;
+  $('#dmForm').classList.remove('hidden');
+  loadDmThread();
+  stopDmPolling();
+  dmPollHandle = setInterval(loadDmThread, 4000);
+}
+
+async function loadDmThread() {
+  if (!dmCurrentUserId) return;
+  try {
+    const data = await api(`/api/chat/direct-messages/?with=${dmCurrentUserId}`);
+    const messages = data.results || data;
+    const list = $('#dmMessageList');
+    const wasAtBottom = list.scrollTop + list.clientHeight >= list.scrollHeight - 20;
+    list.innerHTML = messages.map(m => renderChatBubble(m.sender, m.content, m.created_at)).join('') ||
+      '<div class="empty">No messages yet — say hi.</div>';
+    if (wasAtBottom) list.scrollTop = list.scrollHeight;
+  } catch (err) {
+    $('#dmMessageList').innerHTML = `<div class="msg error">${escapeHtml(err.message)}</div>`;
+  }
+}
+
+$('#dmForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!dmCurrentUserId) return;
+  const input = $('#dmInput');
+  const content = input.value.trim();
+  if (!content) return;
+  input.value = '';
+  try {
+    await api('/api/chat/direct-messages/', {
+      method: 'POST',
+      body: { recipient_id: dmCurrentUserId, content },
+    });
+    loadDmThread();
+    loadConversations();
+  } catch (err) {
+    alert('Could not send message: ' + err.message);
+  }
+});
+
+/* ============================================================
+   BOOTSTRAP
+   ============================================================ */
+checkConnection();
+setInterval(checkConnection, 15000);
+try {
+  const logoutMsg = sessionStorage.getItem('tc_logout_message');
+  if (logoutMsg) {
+    sessionStorage.removeItem('tc_logout_message');
+    const el = $('#loginMsg');
+    showMsg(el, logoutMsg, 'error');
+  }
+} catch (e) {}
+if (state.access && state.user) { enterApp(); }
+</script>
+</body>
+</html>
