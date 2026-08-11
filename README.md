@@ -33,6 +33,15 @@ separately. Built to run on Railway.
   automatic overdue detection
 - **Dashboard**: per-user and per-project task counts by status,
   overdue tasks, upcoming tasks
+- **Kanban board**: toggle any project's Tasks tab between a list
+  view and a drag-and-drop board (To Do / In Progress / Done)
+- **Notifications**: a bell in the top bar shows real notifications
+  (you were assigned a task) plus live-computed "due soon" reminders
+  (assigned tasks due within 24h) — no cron/background job needed
+- **Unread badges**: the Messages nav item shows your unread DM count
+- **Account & passwords**: change your password from the app, or
+  reset a forgotten one via an emailed link (prints to the server
+  console by default in dev — see below for real SMTP)
 - SQLite locally, Postgres in production (auto-detected via `DATABASE_URL`)
 
 ## Tech stack
@@ -118,6 +127,21 @@ All endpoints are under `/api/`. Authenticated requests need:
 | GET | `/api/chat/direct-messages/?with={user_id}` | Full DM thread with that user (marks their messages read) |
 | POST | `/api/chat/direct-messages/` | Send a DM -- body: `{"recipient_id": id, "content": "..."}` |
 | GET | `/api/chat/conversations/` | Everyone you've DM'd, with last message + unread count |
+
+### Notifications
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/notifications/` | Real notifications + live "due soon" reminders, newest first |
+| GET | `/api/notifications/unread-count/` | `{unread_notifications, due_soon}` counts for badges |
+| POST | `/api/notifications/{id}/read/` | Mark one real notification as read |
+| POST | `/api/notifications/read-all/` | Mark all your real notifications as read |
+
+### Account
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/auth/password/change/` | Change your password while logged in -- body: `current_password`, `new_password`, `new_password2` |
+| POST | `/api/auth/password/reset/` | Request a reset link by email -- body: `email` (always returns a generic success message) |
+| POST | `/api/auth/password/reset/confirm/` | Set a new password -- body: `uid`, `token`, `new_password`, `new_password2` |
 
 ### Dashboard
 | Method | Endpoint | Description |

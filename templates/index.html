@@ -158,6 +158,59 @@
   .inline-form label{margin-top:0;}
 
   .hidden{display:none !important;}
+
+  /* ---------- notification bell ---------- */
+  .bell-wrap{position:relative;}
+  #bellBtn{position:relative;font-size:14px;padding:6px 10px;}
+  .badge-count{
+    position:absolute;top:-6px;right:-6px;background:var(--red);color:#1a0b0c;
+    font-family:var(--mono);font-size:10px;font-weight:700;border-radius:999px;
+    min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px;
+  }
+  .bell-dropdown{
+    position:absolute;top:calc(100% + 8px);right:0;width:340px;max-height:420px;overflow-y:auto;
+    background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.4);
+    z-index:50;padding:10px;
+  }
+  .bell-dropdown-header{
+    display:flex;align-items:center;justify-content:space-between;font-family:var(--mono);
+    font-size:12px;color:var(--muted);margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--line);
+  }
+  .nav-badge{
+    background:var(--red);color:#1a0b0c;font-family:var(--mono);font-size:10px;font-weight:700;
+    border-radius:999px;min-width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;
+    padding:0 5px;margin-left:6px;
+  }
+
+  /* ---------- modal ---------- */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:100;
+  }
+  .modal-card{width:400px;max-width:90vw;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:22px;max-height:85vh;overflow-y:auto;}
+  .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+  .modal-close{cursor:pointer;font-size:22px;color:var(--muted);line-height:1;}
+  .modal-close:hover{color:var(--text);}
+
+  /* ---------- kanban board ---------- */
+  .board-toggle{display:flex;gap:6px;margin-bottom:14px;}
+  .board-toggle .tab{border:1px solid var(--line);border-radius:6px;padding:6px 12px;border-bottom:1px solid var(--line);}
+  .board-toggle .tab.active{border-color:var(--amber);}
+  .kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  @media(max-width:760px){.kanban{grid-template-columns:1fr;}}
+  .kanban-col{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px;min-height:120px;}
+  .kanban-col-header{
+    font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);
+    margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;
+  }
+  .kanban-col.dragover{border-color:var(--amber);background:var(--panel-2);}
+  .kanban-card{
+    background:var(--panel-2);border:1px solid var(--line);border-left:3px solid var(--line);border-radius:6px;
+    padding:10px;margin-bottom:8px;cursor:grab;
+  }
+  .kanban-card.overdue{border-left-color:var(--red);}
+  .kanban-card[draggable="false"]{cursor:default;opacity:.75;}
+  .kanban-card .title{font-size:13px;font-weight:600;}
+  .kanban-card .meta{color:var(--muted);font-size:11px;margin-top:4px;font-family:var(--mono);}
 </style>
 </head>
 <body>
@@ -166,8 +219,41 @@
   <div class="brand"><span class="dot"></span> WRKFLW</div>
   <div class="conn" id="connIndicator"><span class="led"></span><span id="connLabel">checking…</span></div>
   <div class="spacer"></div>
+  <div class="bell-wrap hidden" id="bellWrap">
+    <button class="btn secondary small" id="bellBtn">🔔<span class="badge-count hidden" id="bellBadge">0</span></button>
+    <div class="bell-dropdown hidden" id="bellDropdown">
+      <div class="bell-dropdown-header">
+        <span>Notifications</span>
+        <button class="btn secondary small" id="markAllReadBtn">Mark all read</button>
+      </div>
+      <div class="list" id="bellList"></div>
+    </div>
+  </div>
   <div class="who hidden" id="whoBox"></div>
+  <button class="btn secondary small hidden" id="accountBtn">Account</button>
   <button class="btn secondary small hidden" id="logoutBtn">Log out</button>
+</div>
+
+<!-- ACCOUNT / CHANGE PASSWORD MODAL -->
+<div class="modal-overlay hidden" id="accountModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>Account</h2>
+      <span class="modal-close" id="accountModalClose">&times;</span>
+    </div>
+    <p class="meta" id="accountInfo" style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:14px;"></p>
+    <h2>Change password</h2>
+    <form id="changePasswordForm">
+      <label>Current password</label>
+      <input type="password" id="cpCurrent" required>
+      <label>New password</label>
+      <input type="password" id="cpNew" required>
+      <label>Confirm new password</label>
+      <input type="password" id="cpNew2" required>
+      <button class="btn" type="submit">Update password</button>
+    </form>
+    <div class="msg hidden" id="changePasswordMsg"></div>
+  </div>
 </div>
 
 <!-- AUTH SCREEN -->
@@ -187,6 +273,30 @@
       <input type="password" id="loginPassword" required autocomplete="current-password">
       <button class="btn" type="submit" style="width:100%">Log in</button>
       <div class="msg hidden" id="loginMsg"></div>
+      <div style="text-align:center;margin-top:10px;">
+        <span class="back-link" id="forgotPasswordLink">Forgot your password?</span>
+      </div>
+    </form>
+
+    <form id="forgotPasswordForm" class="hidden">
+      <p class="subtitle" style="margin-bottom:14px;">Enter your account email and we'll send you a reset link.</p>
+      <label>Email</label>
+      <input type="email" id="fpEmail" required>
+      <button class="btn" type="submit" style="width:100%">Send reset link</button>
+      <div class="msg hidden" id="forgotPasswordMsg"></div>
+      <div style="text-align:center;margin-top:10px;">
+        <span class="back-link" id="backToLoginLink">&larr; back to login</span>
+      </div>
+    </form>
+
+    <form id="resetPasswordForm" class="hidden">
+      <p class="subtitle" style="margin-bottom:14px;">Choose a new password.</p>
+      <label>New password</label>
+      <input type="password" id="rpNew" required>
+      <label>Confirm new password</label>
+      <input type="password" id="rpNew2" required>
+      <button class="btn" type="submit" style="width:100%">Set new password</button>
+      <div class="msg hidden" id="resetPasswordMsg"></div>
     </form>
 
     <form id="signupForm" class="hidden">
@@ -211,7 +321,9 @@
   <div class="sidebar">
     <div class="nav-item active" data-view="dashboard"><span class="idx">01</span> Dashboard</div>
     <div class="nav-item" data-view="projects"><span class="idx">02</span> Projects</div>
-    <div class="nav-item" data-view="messages"><span class="idx">03</span> Messages</div>
+    <div class="nav-item" data-view="messages">
+      <span class="idx">03</span> Messages<span class="nav-badge hidden" id="messagesBadge">0</span>
+    </div>
   </div>
 
   <div class="main">
@@ -223,7 +335,7 @@
       <div class="grid cols-3" id="statGrid"></div>
 
       <div style="margin-top:26px" class="grid cols-2">
-        <div class="card" >
+        <div class="card">
           <h2>Overdue — yours</h2>
           <div class="list" id="myOverdueList"></div>
         </div>
@@ -297,7 +409,13 @@
           <div class="msg hidden" id="createTaskMsg"></div>
         </div>
 
+        <div class="board-toggle">
+          <div class="tab active" data-taskview="list">List</div>
+          <div class="tab" data-taskview="board">Board</div>
+        </div>
+
         <div class="list" id="tasksList" style="margin-top:14px"></div>
+        <div class="kanban hidden" id="tasksBoard" style="margin-top:14px"></div>
       </div>
 
       <div id="pd-submission" class="hidden">
@@ -479,14 +597,54 @@ async function checkConnection() {
 /* ============================================================
    AUTH SCREEN LOGIC
    ============================================================ */
+function showAuthForm(name) {
+  $('#loginForm').classList.toggle('hidden', name !== 'login');
+  $('#signupForm').classList.toggle('hidden', name !== 'signup');
+  $('#forgotPasswordForm').classList.toggle('hidden', name !== 'forgot');
+  $('#resetPasswordForm').classList.toggle('hidden', name !== 'reset');
+  $$('[data-authtab]').forEach(t => t.classList.toggle('active', t.dataset.authtab === name));
+}
+
 $$('[data-authtab]').forEach(tab => {
-  tab.addEventListener('click', () => {
-    $$('[data-authtab]').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    const which = tab.dataset.authtab;
-    $('#loginForm').classList.toggle('hidden', which !== 'login');
-    $('#signupForm').classList.toggle('hidden', which !== 'signup');
-  });
+  tab.addEventListener('click', () => showAuthForm(tab.dataset.authtab));
+});
+
+$('#forgotPasswordLink').addEventListener('click', () => showAuthForm('forgot'));
+$('#backToLoginLink').addEventListener('click', () => showAuthForm('login'));
+
+$('#forgotPasswordForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = $('#forgotPasswordMsg');
+  msg.classList.add('hidden');
+  try {
+    const res = await api('/api/auth/password/reset/', {
+      method: 'POST', auth: false,
+      body: { email: $('#fpEmail').value },
+    });
+    showMsg(msg, res.detail || 'If that email is registered, a reset link has been sent.', 'ok');
+  } catch (err) {
+    showMsg(msg, err.message || 'Could not send reset link', 'error');
+  }
+});
+
+let pendingResetUid = null, pendingResetToken = null;
+
+$('#resetPasswordForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = $('#resetPasswordMsg');
+  msg.classList.add('hidden');
+  const pw = $('#rpNew').value, pw2 = $('#rpNew2').value;
+  if (pw !== pw2) { showMsg(msg, 'Passwords do not match', 'error'); return; }
+  try {
+    await api('/api/auth/password/reset/confirm/', {
+      method: 'POST', auth: false,
+      body: { uid: pendingResetUid, token: pendingResetToken, new_password: pw, new_password2: pw2 },
+    });
+    showMsg(msg, 'Password reset — you can log in now.', 'ok');
+    setTimeout(() => showAuthForm('login'), 1200);
+  } catch (err) {
+    showMsg(msg, err.message || 'Could not reset password', 'error');
+  }
 });
 
 function showMsg(el, text, kind) {
@@ -572,9 +730,13 @@ async function enterApp() {
   $('#appLayout').classList.remove('hidden');
   $('#whoBox').classList.remove('hidden');
   $('#logoutBtn').classList.remove('hidden');
+  $('#accountBtn').classList.remove('hidden');
+  $('#bellWrap').classList.remove('hidden');
   $('#whoBox').innerHTML = `<b>${escapeHtml(state.user.username)}</b><span class="role-pill">${state.user.role}</span>`;
   try { const u = await api('/api/auth/users/'); state.users = u.results || u; } catch(e){}
   showView('dashboard');
+  refreshBadges();
+  setInterval(refreshBadges, 15000);
 }
 
 function escapeHtml(s) {
@@ -585,6 +747,110 @@ function fmtDate(iso) {
   const d = new Date(iso);
   return d.toLocaleDateString(undefined, { month:'short', day:'numeric' }) + ' ' + d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
 }
+
+/* ============================================================
+   NOTIFICATION BELL
+   ============================================================ */
+async function refreshBadges() {
+  try {
+    const counts = await api('/api/notifications/unread-count/');
+    const total = (counts.unread_notifications || 0) + (counts.due_soon || 0);
+    const bellBadge = $('#bellBadge');
+    bellBadge.textContent = total;
+    bellBadge.classList.toggle('hidden', total === 0);
+  } catch (e) { /* silent -- badge just won't update this cycle */ }
+
+  try {
+    const convos = await api('/api/chat/conversations/');
+    const unread = convos.reduce((sum, c) => sum + (c.unread_count || 0), 0);
+    const msgBadge = $('#messagesBadge');
+    msgBadge.textContent = unread;
+    msgBadge.classList.toggle('hidden', unread === 0);
+  } catch (e) { /* silent */ }
+}
+
+$('#bellBtn').addEventListener('click', async (e) => {
+  e.stopPropagation();
+  const dropdown = $('#bellDropdown');
+  const opening = dropdown.classList.contains('hidden');
+  dropdown.classList.toggle('hidden');
+  if (opening) await loadBellDropdown();
+});
+document.addEventListener('click', (e) => {
+  const dropdown = $('#bellDropdown');
+  if (!dropdown.classList.contains('hidden') && !dropdown.contains(e.target) && e.target.id !== 'bellBtn') {
+    dropdown.classList.add('hidden');
+  }
+});
+
+async function loadBellDropdown() {
+  $('#bellList').innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const items = await api('/api/notifications/');
+    $('#bellList').innerHTML = items.map(n => `
+      <div class="row-card ${n.is_read ? '' : 'overdue'}" style="cursor:default;border-left-color:${n.kind === 'due_soon' ? 'var(--amber)' : (n.is_read ? 'var(--line)' : 'var(--red)')};">
+        <div class="main-txt">
+          <div class="title" style="font-size:12px;">${escapeHtml(n.message)}</div>
+          <div class="meta">${n.project_name ? escapeHtml(n.project_name) + ' · ' : ''}${fmtDate(n.created_at)}</div>
+        </div>
+        ${(n.kind === 'notification' && !n.is_read) ? `<button class="btn secondary small" data-marknotif="${n.id}">Mark read</button>` : ''}
+      </div>
+    `).join('') || '<div class="empty">No notifications.</div>';
+
+    $$('[data-marknotif]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        try {
+          await api(`/api/notifications/${btn.dataset.marknotif}/read/`, { method: 'POST' });
+          loadBellDropdown();
+          refreshBadges();
+        } catch (err) { alert('Could not mark as read: ' + err.message); }
+      });
+    });
+  } catch (err) {
+    $('#bellList').innerHTML = `<div class="msg error">${escapeHtml(err.message)}</div>`;
+  }
+}
+
+$('#markAllReadBtn').addEventListener('click', async (e) => {
+  e.stopPropagation();
+  try {
+    await api('/api/notifications/read-all/', { method: 'POST' });
+    loadBellDropdown();
+    refreshBadges();
+  } catch (err) { alert('Could not mark all as read: ' + err.message); }
+});
+
+/* ============================================================
+   ACCOUNT MODAL (change password)
+   ============================================================ */
+$('#accountBtn').addEventListener('click', () => {
+  $('#accountInfo').textContent = `${state.user.username} · ${state.user.email || ''} · role: ${state.user.role}`;
+  $('#cpCurrent').value = ''; $('#cpNew').value = ''; $('#cpNew2').value = '';
+  $('#changePasswordMsg').classList.add('hidden');
+  $('#accountModal').classList.remove('hidden');
+});
+$('#accountModalClose').addEventListener('click', () => $('#accountModal').classList.add('hidden'));
+$('#accountModal').addEventListener('click', (e) => {
+  if (e.target.id === 'accountModal') $('#accountModal').classList.add('hidden');
+});
+
+$('#changePasswordForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = $('#changePasswordMsg');
+  msg.classList.add('hidden');
+  const newPw = $('#cpNew').value, newPw2 = $('#cpNew2').value;
+  if (newPw !== newPw2) { showMsg(msg, 'New passwords do not match', 'error'); return; }
+  try {
+    await api('/api/auth/password/change/', {
+      method: 'POST',
+      body: { current_password: $('#cpCurrent').value, new_password: newPw, new_password2: newPw2 },
+    });
+    showMsg(msg, 'Password updated.', 'ok');
+    $('#cpCurrent').value = ''; $('#cpNew').value = ''; $('#cpNew2').value = '';
+  } catch (err) {
+    showMsg(msg, err.message || 'Could not change password', 'error');
+  }
+});
 
 /* ============================================================
    DASHBOARD
@@ -677,6 +943,8 @@ async function openProject(id) {
   ['dashboard', 'projects', 'project-detail'].forEach(v => {
     $('#view-' + v).classList.toggle('hidden', v !== 'project-detail');
   });
+  state_taskViewMode = 'list';
+  $$('[data-taskview]').forEach(t => t.classList.toggle('active', t.dataset.taskview === 'list'));
   try {
     const p = await api(`/api/projects/${id}/`);
     state.currentProject = p;
@@ -725,54 +993,142 @@ function populateUserPicker(memberships) {
     '<option value="">No other users</option>';
 }
 
+let state_lastLoadedTasks = [];
+let state_taskViewMode = 'list';
+
 async function loadTasks(projectId) {
   $('#tasksList').innerHTML = '<div class="empty">Loading…</div>';
   try {
     const data = await api(`/api/tasks/?project=${projectId}`);
     const tasks = data.results || data;
-    const isAdmin = state.currentProject.my_role === 'admin';
-    $('#tasksList').innerHTML = tasks.map(t => `
-      <div class="row-card ${t.is_overdue ? 'overdue' : ''}" style="cursor:default">
-        <span class="status-dot ${t.status}"></span>
-        <div class="main-txt">
-          <div class="title">${escapeHtml(t.title)}</div>
-          <div class="meta">
-            ${t.assigned_to ? '@' + escapeHtml(t.assigned_to.username) : 'unassigned'}
-            ${t.due_date ? ' · due ' + fmtDate(t.due_date) : ''}
-            ${t.is_overdue ? ' · <span style="color:var(--red)">OVERDUE</span>' : ''}
-          </div>
-        </div>
-        <span class="badge ${t.priority}">${t.priority}</span>
-        ${canEditTask(t, isAdmin) ? `
-          <select data-taskid="${t.id}" class="statusSelect" style="width:auto">
-            <option value="todo" ${t.status==='todo'?'selected':''}>To do</option>
-            <option value="in_progress" ${t.status==='in_progress'?'selected':''}>In progress</option>
-            <option value="done" ${t.status==='done'?'selected':''}>Done</option>
-          </select>` : ''}
-        ${isAdmin ? `<button class="btn danger small" data-deltask="${t.id}">Delete</button>` : ''}
-      </div>
-    `).join('') || '<div class="empty">No tasks yet.</div>';
-
-    $$('.statusSelect').forEach(sel => {
-      sel.addEventListener('change', async () => {
-        try {
-          await api(`/api/tasks/${sel.dataset.taskid}/`, { method: 'PATCH', body: { status: sel.value } });
-          loadTasks(projectId);
-        } catch (err) { alert('Update failed: ' + err.message); }
-      });
-    });
-    $$('[data-deltask]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        if (!confirm('Delete this task?')) return;
-        try {
-          await api(`/api/tasks/${btn.dataset.deltask}/`, { method: 'DELETE' });
-          loadTasks(projectId);
-        } catch (err) { alert('Delete failed: ' + err.message); }
-      });
-    });
+    state_lastLoadedTasks = tasks;
+    renderTasksCurrentView(projectId);
   } catch (err) {
     $('#tasksList').innerHTML = `<div class="msg error">${escapeHtml(err.message)}</div>`;
   }
+}
+
+function renderTasksCurrentView(projectId) {
+  if (state_taskViewMode === 'board') {
+    $('#tasksList').classList.add('hidden');
+    $('#tasksBoard').classList.remove('hidden');
+    renderTasksBoard(projectId);
+  } else {
+    $('#tasksBoard').classList.add('hidden');
+    $('#tasksList').classList.remove('hidden');
+    renderTasksList(projectId);
+  }
+}
+
+$$('[data-taskview]').forEach(tab => {
+  tab.addEventListener('click', () => {
+    $$('[data-taskview]').forEach(t => t.classList.toggle('active', t === tab));
+    state_taskViewMode = tab.dataset.taskview;
+    renderTasksCurrentView(state.currentProject.id);
+  });
+});
+
+function renderTasksList(projectId) {
+  const tasks = state_lastLoadedTasks;
+  const isAdmin = state.currentProject.my_role === 'admin';
+  $('#tasksList').innerHTML = tasks.map(t => `
+    <div class="row-card ${t.is_overdue ? 'overdue' : ''}" style="cursor:default">
+      <span class="status-dot ${t.status}"></span>
+      <div class="main-txt">
+        <div class="title">${escapeHtml(t.title)}</div>
+        <div class="meta">
+          ${t.assigned_to ? '@' + escapeHtml(t.assigned_to.username) : 'unassigned'}
+          ${t.due_date ? ' · due ' + fmtDate(t.due_date) : ''}
+          ${t.is_overdue ? ' · <span style="color:var(--red)">OVERDUE</span>' : ''}
+        </div>
+      </div>
+      <span class="badge ${t.priority}">${t.priority}</span>
+      ${canEditTask(t, isAdmin) ? `
+        <select data-taskid="${t.id}" class="statusSelect" style="width:auto">
+          <option value="todo" ${t.status==='todo'?'selected':''}>To do</option>
+          <option value="in_progress" ${t.status==='in_progress'?'selected':''}>In progress</option>
+          <option value="done" ${t.status==='done'?'selected':''}>Done</option>
+        </select>` : ''}
+      ${isAdmin ? `<button class="btn danger small" data-deltask="${t.id}">Delete</button>` : ''}
+    </div>
+  `).join('') || '<div class="empty">No tasks yet.</div>';
+
+  $$('.statusSelect').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      try {
+        await api(`/api/tasks/${sel.dataset.taskid}/`, { method: 'PATCH', body: { status: sel.value } });
+        loadTasks(projectId);
+      } catch (err) { alert('Update failed: ' + err.message); }
+    });
+  });
+  $$('[data-deltask]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Delete this task?')) return;
+      try {
+        await api(`/api/tasks/${btn.dataset.deltask}/`, { method: 'DELETE' });
+        loadTasks(projectId);
+      } catch (err) { alert('Delete failed: ' + err.message); }
+    });
+  });
+}
+
+const BOARD_COLUMNS = [
+  { status: 'todo', label: 'To Do' },
+  { status: 'in_progress', label: 'In Progress' },
+  { status: 'done', label: 'Done' },
+];
+
+function renderTasksBoard(projectId) {
+  const tasks = state_lastLoadedTasks;
+  const isAdmin = state.currentProject.my_role === 'admin';
+
+  $('#tasksBoard').innerHTML = BOARD_COLUMNS.map(col => {
+    const colTasks = tasks.filter(t => t.status === col.status);
+    return `
+      <div class="kanban-col" data-column="${col.status}">
+        <div class="kanban-col-header"><span>${col.label}</span><span>${colTasks.length}</span></div>
+        <div class="kanban-col-body" data-column-body="${col.status}">
+          ${colTasks.map(t => {
+            const editable = canEditTask(t, isAdmin);
+            return `
+              <div class="kanban-card ${t.is_overdue ? 'overdue' : ''}" data-taskid="${t.id}" draggable="${editable}">
+                <div class="title">${escapeHtml(t.title)}</div>
+                <div class="meta">
+                  ${t.assigned_to ? '@' + escapeHtml(t.assigned_to.username) : 'unassigned'}
+                  ${t.due_date ? ' · ' + fmtDate(t.due_date) : ''}
+                </div>
+              </div>
+            `;
+          }).join('') || '<div class="empty" style="padding:10px;font-size:12px;">Empty</div>'}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  $$('.kanban-card[draggable="true"]').forEach(card => {
+    card.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', card.dataset.taskid);
+      e.dataTransfer.effectAllowed = 'move';
+    });
+  });
+
+  $$('.kanban-col').forEach(col => {
+    col.addEventListener('dragover', (e) => { e.preventDefault(); col.classList.add('dragover'); });
+    col.addEventListener('dragleave', () => col.classList.remove('dragover'));
+    col.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      col.classList.remove('dragover');
+      const taskId = e.dataTransfer.getData('text/plain');
+      const newStatus = col.dataset.column;
+      if (!taskId) return;
+      try {
+        await api(`/api/tasks/${taskId}/`, { method: 'PATCH', body: { status: newStatus } });
+        loadTasks(projectId);
+      } catch (err) {
+        alert('Could not move task: ' + err.message);
+      }
+    });
+  });
 }
 
 function canEditTask(t, isAdmin) {
@@ -1008,6 +1364,7 @@ function openDmThread(userId, username) {
   $('#dmWithName').textContent = username;
   $('#dmForm').classList.remove('hidden');
   loadDmThread();
+  refreshBadges();
   stopDmPolling();
   dmPollHandle = setInterval(loadDmThread, 4000);
 }
@@ -1059,6 +1416,21 @@ try {
     showMsg(el, logoutMsg, 'error');
   }
 } catch (e) {}
+
+// If this page was opened from a password-reset email link, show the
+// "set new password" form instead of the normal login screen.
+(function checkForResetLink() {
+  const params = new URLSearchParams(window.location.search);
+  const uid = params.get('reset_uid');
+  const token = params.get('reset_token');
+  if (uid && token) {
+    pendingResetUid = uid;
+    pendingResetToken = token;
+    showAuthForm('reset');
+    history.replaceState({}, '', window.location.pathname);
+  }
+})();
+
 if (state.access && state.user) { enterApp(); }
 </script>
 </body>

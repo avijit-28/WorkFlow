@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "tasks",
     "submissions",
     "chat",
+    "notifications",
 ]
 
 MIDDLEWARE = [
@@ -182,6 +183,23 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = None
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # switch to temp-file storage above 10MB
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# --------------------------------------------------------------------
+# Email (used for password reset links)
+# --------------------------------------------------------------------
+# Defaults to printing emails to the server console -- fine for local
+# dev/demo without any SMTP setup. Set EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+# plus EMAIL_HOST/EMAIL_PORT/EMAIL_HOST_USER/EMAIL_HOST_PASSWORD/EMAIL_USE_TLS
+# as env vars in production to actually send real emails.
+EMAIL_BACKEND = os.environ.get(
+    "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
+)
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True").lower() == "true"
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@taskmanager.local")
 
 # When Railway terminates TLS in front of the app, trust the forwarded proto.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

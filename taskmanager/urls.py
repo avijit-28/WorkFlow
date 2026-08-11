@@ -32,6 +32,10 @@ def api_root(request):
                 "project_messages": "/api/chat/project-messages/?project=<id>",
                 "direct_messages": "/api/chat/direct-messages/?with=<user_id>",
                 "conversations": "/api/chat/conversations/",
+                "notifications": "/api/notifications/",
+                "password_change": "/api/auth/password/change/",
+                "password_reset": "/api/auth/password/reset/",
+                "password_reset_confirm": "/api/auth/password/reset/confirm/",
             },
         }
     )
@@ -52,6 +56,7 @@ urlpatterns = [
     path("api/dashboard/", DashboardView.as_view(), name="dashboard"),
     path("api/submissions/", include("submissions.urls")),
     path("api/chat/", include("chat.urls")),
+    path("api/notifications/", include("notifications.urls")),
 ]
 
 # Media (uploaded submission files) are served by Django directly --

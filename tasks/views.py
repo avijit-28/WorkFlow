@@ -13,8 +13,21 @@ from projects.permissions import is_project_admin, is_project_member
 from .models import Task
 from .permissions import TaskPermission
 from .serializers import TaskSerializer, TaskStatusUpdateSerializer
+from notifications.models import Notification
 
 User = get_user_model()
+
+
+def _notify_assignment(actor, task):
+    """Notify a task's assignee, unless they assigned it to themselves."""
+    if task.assigned_to_id and task.assigned_to_id != actor.id:
+        Notification.objects.create(
+            recipient_id=task.assigned_to_id,
+            verb=Notification.Verb.TASK_ASSIGNED,
+            message=f'{actor.username} assigned you to "{task.title}" in {task.project.name}',
+            project=task.project,
+            task=task,
+        )
 
 
 class TaskViewSet(viewsets.ModelViewSet):
@@ -52,11 +65,13 @@ class TaskViewSet(viewsets.ModelViewSet):
         project = serializer.validated_data["project"]
         if not is_project_admin(self.request.user, project):
             raise PermissionDenied("Only a project admin can create tasks in this project.")
-        serializer.save(created_by=self.request.user)
+        task = serializer.save(created_by=self.request.user)
+        _notify_assignment(self.request.user, task)
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()  # runs object-level permission check
         partial = kwargs.pop("partial", False)
+        previous_assignee_id = instance.assigned_to_id
 
         if is_project_admin(request.user, instance.project) or request.user.is_superuser:
             serializer = TaskSerializer(instance, data=request.data, partial=partial, context={"request": request})
@@ -66,6 +81,10 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        if instance.assigned_to_id != previous_assignee_id:
+            _notify_assignment(request.user, instance)
+
         return Response(TaskSerializer(instance, context={"request": request}).data)
 
     def destroy(self, request, *args, **kwargs):
