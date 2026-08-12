@@ -5,11 +5,41 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from projects.permissions import is_project_member
+from notifications.models import Notification
 
 from .models import DirectMessage, ProjectMessage
 from .serializers import DirectMessageSerializer, ProjectMessageSerializer
 
 User = get_user_model()
+
+
+def _notify_project_message(message):
+    """Notify every other member of the project (not the sender)."""
+    from projects.models import ProjectMembership
+
+    recipient_ids = ProjectMembership.objects.filter(project=message.project).exclude(
+        user_id=message.sender_id
+    ).values_list("user_id", flat=True)
+
+    Notification.objects.bulk_create(
+        [
+            Notification(
+                recipient_id=uid,
+                verb=Notification.Verb.PROJECT_MESSAGE,
+                message=f'{message.sender.username} in {message.project.name}: "{message.content[:60]}"',
+                project=message.project,
+            )
+            for uid in recipient_ids
+        ]
+    )
+
+
+def _notify_direct_message(message):
+    Notification.objects.create(
+        recipient_id=message.recipient_id,
+        verb=Notification.Verb.DIRECT_MESSAGE,
+        message=f'{message.sender.username} messaged you: "{message.content[:60]}"',
+    )
 
 
 class ProjectMessageListCreateView(generics.ListCreateAPIView):
@@ -44,7 +74,8 @@ class ProjectMessageListCreateView(generics.ListCreateAPIView):
             return Response({"detail": "You are not a member of this project."}, status=status.HTTP_403_FORBIDDEN)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(sender=request.user, project_id=project_id)
+        message = serializer.save(sender=request.user, project_id=project_id)
+        _notify_project_message(message)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @staticmethod
@@ -93,7 +124,8 @@ class DirectMessageListCreateView(generics.ListCreateAPIView):
         recipient_id = serializer.validated_data["recipient_id"]
         if recipient_id == request.user.id:
             return Response({"detail": "You cannot message yourself."}, status=status.HTTP_400_BAD_REQUEST)
-        serializer.save(sender=request.user, recipient_id=recipient_id)
+        message = serializer.save(sender=request.user, recipient_id=recipient_id)
+        _notify_direct_message(message)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 

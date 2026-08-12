@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from .models import Project, ProjectMembership
 from .permissions import IsProjectAdminOrReadOnly, is_project_admin
 from .serializers import ProjectDetailSerializer, ProjectMembershipSerializer, ProjectSerializer
+from notifications.models import Notification
 
 User = get_user_model()
 
@@ -80,6 +81,13 @@ class ProjectViewSet(viewsets.ModelViewSet):
             return Response(
                 {"detail": "User is already a member of this project."},
                 status=status.HTTP_400_BAD_REQUEST,
+            )
+        if user.id != request.user.id:
+            Notification.objects.create(
+                recipient=user,
+                verb=Notification.Verb.MEMBER_ADDED,
+                message=f'{request.user.username} added you to "{project.name}"',
+                project=project,
             )
         return Response(ProjectMembershipSerializer(membership).data, status=status.HTTP_201_CREATED)
 

@@ -13,6 +13,9 @@ class Notification(models.Model):
 
     class Verb(models.TextChoices):
         TASK_ASSIGNED = "task_assigned", "Assigned to a task"
+        PROJECT_MESSAGE = "project_message", "New project chat message"
+        DIRECT_MESSAGE = "direct_message", "New direct message"
+        MEMBER_ADDED = "member_added", "Added to a project"
 
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications"
