@@ -135,6 +135,14 @@ def _now():
     return timezone.now()
 
 
+def _attachment_type_for(message):
+    if not message.attachment:
+        return None
+    from .serializers import _attachment_type
+
+    return _attachment_type(message.attachment)
+
+
 class ConversationListView(APIView):
     """
     GET /api/chat/conversations/
@@ -167,6 +175,7 @@ class ConversationListView(APIView):
                 {
                     "user": {"id": other.id, "username": other.username, "role": other.role},
                     "last_message": last.content,
+                    "last_message_attachment_type": _attachment_type_for(last),
                     "last_message_at": last.created_at,
                     "unread_count": unread,
                 }

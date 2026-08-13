@@ -1,5 +1,20 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
+
+
+def _validate_chat_attachment_size(value):
+    max_bytes = 25 * 1024 * 1024  # 25MB, plenty for phone photos/short clips
+    if value.size > max_bytes:
+        raise ValidationError("Attachments must be 25MB or smaller.")
+
+
+def project_attachment_upload_path(instance, filename):
+    return f"chat/project_{instance.project_id}/{filename}"
+
+
+def direct_attachment_upload_path(instance, filename):
+    return f"chat/dm_{instance.sender_id}_{instance.recipient_id}/{filename}"
 
 
 class ProjectMessage(models.Model):
@@ -9,7 +24,10 @@ class ProjectMessage(models.Model):
     sender = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="project_messages"
     )
-    content = models.TextField()
+    content = models.TextField(blank=True)
+    attachment = models.FileField(
+        upload_to=project_attachment_upload_path, blank=True, null=True, validators=[_validate_chat_attachment_size]
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -31,7 +49,10 @@ class DirectMessage(models.Model):
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="received_messages"
     )
-    content = models.TextField()
+    content = models.TextField(blank=True)
+    attachment = models.FileField(
+        upload_to=direct_attachment_upload_path, blank=True, null=True, validators=[_validate_chat_attachment_size]
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     read_at = models.DateTimeField(null=True, blank=True)
 

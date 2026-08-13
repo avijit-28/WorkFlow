@@ -6,33 +6,48 @@
 <title>WORKFLOW</title>
 <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/8317/8317737.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#0A0C10;
-    --panel:#12151B;
-    --panel-2:#1A1E27;
-    --line:#262B36;
-    --text:#ECEEF2;
-    --muted:#8891A3;
-    --amber:#F5A93F;
-    --amber-dim:#4A3416;
-    --teal:#4FE0C7;
-    --teal-dim:#123330;
-    --red:#FF6570;
-    --red-dim:#3D161B;
-    --blue:#6FA3FF;
-    --blue-dim:#132A4A;
-    --radius:10px;
+    /* Base surfaces -- light AWS-console canvas */
+    --ink:#F2F3F3;
+    --panel:#FFFFFF;
+    --panel-2:#F7F8F8;
+    --line:#D5DBDB;
+    --text:#16191F;
+    --muted:#5F6B7A;
+
+    /* Nav chrome -- dark navy header/sidebar like the AWS console top bar */
+    --navy:#232F3E;
+    --navy-2:#2E3D50;
+    --navy-line:#3A4A5E;
+    --navy-text:#E9EBED;
+    --navy-muted:#9BA7B4;
+
+    /* Status/semantic accents */
+    --amber:#FF9900;
+    --amber-hover:#EC7211;
+    --amber-dim:#FFF1DB;
+    --teal:#1D8102;
+    --teal-dim:#E9F5E4;
+    --red:#D91515;
+    --red-dim:#FDE8E8;
+    --blue:#0972D3;
+    --blue-dim:#E6F1FB;
+
+    --radius:8px;
     --dock-h:60px;
     --mono:'IBM Plex Mono', ui-monospace, monospace;
-    --sans:'Plus Jakarta Sans', system-ui, sans-serif;
+    --sans:'Inter', system-ui, sans-serif;
+    --shadow-sm:0 1px 2px rgba(22,25,31,.08);
+    --shadow-md:0 4px 14px rgba(22,25,31,.10);
+    --shadow-lg:0 12px 32px rgba(22,25,31,.18);
   }
   *{box-sizing:border-box;}
   html{-webkit-text-size-adjust:100%;}
   body{margin:0;background:var(--ink);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased;}
-  ::selection{background:var(--amber-dim);color:#fff;}
-  a{color:inherit;}
+  ::selection{background:var(--amber-dim);color:var(--text);}
+  a{color:var(--blue);}
 
   @media (prefers-reduced-motion: reduce){
     *{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;}
@@ -41,87 +56,93 @@
   :focus-visible{outline:2px solid var(--amber);outline-offset:2px;border-radius:4px;}
 
   @keyframes pulse-signal{
-    0%,100%{box-shadow:0 0 0 0 rgba(245,169,63,.45);}
-    50%{box-shadow:0 0 0 5px rgba(245,169,63,0);}
+    0%,100%{box-shadow:0 0 0 0 rgba(255,153,0,.4);}
+    50%{box-shadow:0 0 0 5px rgba(255,153,0,0);}
   }
   @keyframes pulse-red{
-    0%,100%{box-shadow:0 0 0 0 rgba(255,101,112,.45);}
-    50%{box-shadow:0 0 0 5px rgba(255,101,112,0);}
+    0%,100%{box-shadow:0 0 0 0 rgba(217,21,21,.35);}
+    50%{box-shadow:0 0 0 5px rgba(217,21,21,0);}
   }
   @keyframes fade-up{
     from{opacity:0;transform:translateY(4px);}
     to{opacity:1;transform:translateY(0);}
   }
+  @keyframes sheet-up{from{transform:translateY(16px);opacity:.6;} to{transform:translateY(0);opacity:1;}}
 
-  /* ---------- top bar ---------- */
+  /* ---------- top bar (AWS console navy header) ---------- */
   .topbar{
     display:flex;align-items:center;gap:12px;
-    padding:10px 20px;background:var(--panel);border-bottom:1px solid var(--line);
+    padding:10px 20px;background:var(--navy);border-bottom:1px solid var(--navy-line);
     position:sticky;top:0;z-index:30;
   }
-  .brand{font-family:var(--mono);font-weight:700;letter-spacing:.02em;font-size:14px;color:var(--text);display:flex;align-items:center;gap:8px;white-space:nowrap;}
+  .brand{font-family:var(--sans);font-weight:800;letter-spacing:-.01em;font-size:15px;color:#fff;display:flex;align-items:center;gap:8px;white-space:nowrap;}
   .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--amber);box-shadow:0 0 8px var(--amber);animation:pulse-signal 2.4s ease-in-out infinite;}
   .conn{
-    display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--muted);
-    margin-left:2px;padding:4px 8px;border:1px solid var(--line);border-radius:999px;white-space:nowrap;
+    display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--navy-muted);
+    margin-left:2px;padding:4px 8px;border:1px solid var(--navy-line);border-radius:999px;white-space:nowrap;
   }
-  .conn .led{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;}
-  .conn.ok .led{background:var(--teal);box-shadow:0 0 6px var(--teal);}
-  .conn.bad .led{background:var(--red);box-shadow:0 0 6px var(--red);}
+  .conn .led{width:7px;height:7px;border-radius:50%;background:var(--navy-muted);flex-shrink:0;}
+  .conn.ok .led{background:#2CA84A;box-shadow:0 0 6px #2CA84A;}
+  .conn.bad .led{background:#FF6161;box-shadow:0 0 6px #FF6161;}
   .apiurl{
-    background:transparent;border:1px solid var(--line);color:var(--muted);font-family:var(--mono);
+    background:var(--navy-2);border:1px solid var(--navy-line);color:var(--navy-muted);font-family:var(--mono);
     font-size:11px;padding:5px 8px;border-radius:6px;width:220px;
   }
-  .apiurl:focus{outline:none;border-color:var(--amber);color:var(--text);}
+  .apiurl:focus{outline:none;border-color:var(--amber);color:#fff;}
   .spacer{flex:1;}
-  .who{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap;}
-  .who b{color:var(--text);}
+  .who{font-family:var(--mono);font-size:12px;color:var(--navy-muted);white-space:nowrap;}
+  .who b{color:#fff;}
   .role-pill{
     font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;
-    padding:2px 7px;border-radius:999px;border:1px solid var(--amber-dim);color:var(--amber);margin-left:6px;
+    padding:2px 7px;border-radius:999px;border:1px solid var(--amber);color:var(--amber);margin-left:6px;
   }
   .btn{
-    font-family:var(--sans);font-weight:600;font-size:13px;color:var(--ink);background:var(--amber);
-    border:none;padding:9px 15px;border-radius:7px;cursor:pointer;transition:filter .12s ease, transform .05s ease, box-shadow .12s ease;
+    font-family:var(--sans);font-weight:700;font-size:13px;color:#fff;background:var(--amber);
+    border:1px solid var(--amber);padding:9px 15px;border-radius:6px;cursor:pointer;
+    transition:background .12s ease, border-color .12s ease, transform .05s ease, box-shadow .12s ease;
     min-height:38px;
   }
-  .btn:hover{filter:brightness(1.08);box-shadow:0 2px 10px rgba(245,169,63,.18);}
+  .btn:hover{background:var(--amber-hover);border-color:var(--amber-hover);box-shadow:var(--shadow-sm);}
   .btn:active{transform:translateY(1px);}
-  .btn.secondary{background:transparent;color:var(--text);border:1px solid var(--line);}
-  .btn.secondary:hover{border-color:var(--amber);color:var(--amber);box-shadow:none;}
-  .btn.danger{background:var(--red);color:#1a0b0c;}
+  .btn.secondary{background:#fff;color:var(--blue);border:1px solid var(--blue);}
+  .btn.secondary:hover{background:var(--blue-dim);box-shadow:none;}
+  .btn.danger{background:#fff;color:var(--red);border:1px solid var(--red);}
+  .btn.danger:hover{background:var(--red-dim);}
   .btn.small{padding:6px 11px;font-size:12px;min-height:32px;}
-  .btn:disabled{opacity:.45;cursor:not-allowed;filter:none;}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+  /* Secondary buttons living on the dark navy topbar need light chrome */
+  .topbar .btn.secondary{background:transparent;color:var(--navy-text);border-color:var(--navy-line);}
+  .topbar .btn.secondary:hover{background:var(--navy-2);border-color:var(--amber);color:var(--amber);}
 
   /* ---------- layout ---------- */
   .layout{display:flex;min-height:calc(100vh - 49px);}
   .sidebar{
-    width:200px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--line);
+    width:200px;flex-shrink:0;background:var(--navy);border-right:1px solid var(--navy-line);
     padding:16px 10px;display:flex;flex-direction:column;gap:2px;
   }
   .nav-item{
-    display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:7px;color:var(--muted);
+    display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:6px;color:var(--navy-muted);
     font-size:13px;font-weight:600;cursor:pointer;user-select:none;position:relative;transition:background .12s ease,color .12s ease;
   }
-  .nav-item:hover{background:var(--panel-2);color:var(--text);}
-  .nav-item.active{background:var(--amber-dim);color:var(--amber);}
+  .nav-item:hover{background:var(--navy-2);color:#fff;}
+  .nav-item.active{background:var(--amber-dim);color:var(--amber-hover);}
   .nav-icon{width:16px;height:16px;flex-shrink:0;color:inherit;}
   .nav-label{flex:1;}
-  .main{flex:1;padding:26px 32px;max-width:1040px;width:100%;}
+  .main{flex:1;padding:26px 32px;max-width:1080px;width:100%;}
 
-  h1{font-family:var(--mono);font-size:clamp(18px,3.6vw,21px);font-weight:700;margin:0 0 4px;letter-spacing:-0.01em;}
-  h2{font-family:var(--mono);font-size:14px;font-weight:600;margin:0 0 12px;color:var(--text);letter-spacing:.01em;}
+  h1{font-family:var(--sans);font-size:clamp(19px,3.6vw,23px);font-weight:800;margin:0 0 4px;letter-spacing:-0.01em;color:var(--text);}
+  h2{font-family:var(--sans);font-size:15px;font-weight:700;margin:0 0 12px;color:var(--text);}
   .subtitle{color:var(--muted);font-size:13px;margin:0 0 22px;}
 
   /* ---------- cards / panels ---------- */
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px;animation:fade-up .25s ease both;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow-sm);animation:fade-up .2s ease both;}
   .grid{display:grid;gap:14px;}
   .grid.cols-3{grid-template-columns:repeat(3,1fr);}
   .grid.cols-2{grid-template-columns:repeat(2,1fr);}
   .grid.dm-layout{grid-template-columns:260px 1fr;}
 
   .stat{border-left:3px solid var(--amber);padding:4px 0 4px 12px;}
-  .stat .n{font-family:var(--mono);font-size:26px;font-weight:700;line-height:1;}
+  .stat .n{font-family:var(--sans);font-size:28px;font-weight:800;line-height:1;color:var(--text);}
   .stat .l{color:var(--muted);font-size:12px;margin-top:4px;}
   .stat.warn{border-color:var(--red);}
   .stat.warn .n{color:var(--red);}
@@ -129,13 +150,13 @@
 
   .list{display:flex;flex-direction:column;gap:10px;margin-top:14px;}
   .row-card{
-    background:var(--panel-2);border:1px solid var(--line);border-left:3px solid var(--line);
+    background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--line);
     border-radius:8px;padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;
     transition:border-color .12s ease, transform .1s ease, box-shadow .12s ease;
   }
-  .row-card:hover{border-color:var(--amber);transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.25);}
+  .row-card:hover{border-color:var(--blue);transform:translateY(-1px);box-shadow:var(--shadow-md);}
   .row-card .main-txt{flex:1;min-width:0;}
-  .row-card .title{font-weight:600;font-size:14px;}
+  .row-card .title{font-weight:700;font-size:14px;color:var(--text);}
   .row-card .meta{color:var(--muted);font-size:12px;margin-top:2px;font-family:var(--mono);}
 
   .status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
@@ -145,39 +166,39 @@
   .row-card.overdue{border-left-color:var(--red);animation:pulse-red 2.6s ease-in-out infinite;}
 
   .badge{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:999px;white-space:nowrap;}
-  .badge.low{background:var(--panel);color:var(--muted);border:1px solid var(--line);}
-  .badge.medium{background:var(--amber-dim);color:var(--amber);}
+  .badge.low{background:var(--panel-2);color:var(--muted);border:1px solid var(--line);}
+  .badge.medium{background:var(--amber-dim);color:var(--amber-hover);}
   .badge.high{background:var(--red-dim);color:var(--red);}
 
   select, input[type=text], input[type=email], input[type=password], input[type=datetime-local], textarea{
-    background:var(--ink);border:1px solid var(--line);color:var(--text);border-radius:7px;
+    background:#fff;border:1px solid var(--line);color:var(--text);border-radius:6px;
     padding:9px 10px;font-family:var(--sans);font-size:13px;width:100%;min-height:38px;
   }
   textarea{min-height:unset;}
-  select:focus, input:focus, textarea:focus{outline:none;border-color:var(--amber);}
+  select:focus, input:focus, textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 1px var(--blue);}
   label{display:block;font-size:11px;color:var(--muted);margin:10px 0 4px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;}
   form .btn{margin-top:14px;}
 
   .tabs{display:flex;gap:4px;margin-bottom:18px;border-bottom:1px solid var(--line);overflow-x:auto;}
   .tab{padding:8px 14px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color .12s ease;}
   .tab:hover{color:var(--text);}
-  .tab.active{color:var(--amber);border-color:var(--amber);}
+  .tab.active{color:var(--blue);border-color:var(--blue);}
 
-  .msg{font-size:12px;padding:9px 11px;border-radius:7px;margin-top:10px;font-family:var(--mono);}
+  .msg{font-size:12px;padding:9px 11px;border-radius:6px;margin-top:10px;font-family:var(--mono);}
   .msg.error{background:var(--red-dim);color:var(--red);}
   .msg.ok{background:var(--teal-dim);color:var(--teal);}
   .empty{color:var(--muted);font-size:13px;padding:22px;text-align:center;border:1px dashed var(--line);border-radius:8px;}
 
   /* ---------- auth screen ---------- */
-  .auth-wrap{min-height:calc(100vh - 49px);display:flex;align-items:center;justify-content:center;padding:20px;}
-  .auth-card{width:380px;max-width:100%;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:26px;animation:fade-up .3s ease both;}
+  .auth-wrap{min-height:calc(100vh - 49px);display:flex;align-items:center;justify-content:center;padding:20px;background:var(--ink);}
+  .auth-card{width:380px;max-width:100%;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:26px;box-shadow:var(--shadow-md);animation:fade-up .3s ease both;}
   .auth-card h1{margin-bottom:2px;}
 
-  .back-link{color:var(--muted);font-size:12px;cursor:pointer;font-family:var(--mono);margin-bottom:14px;display:inline-block;}
-  .back-link:hover{color:var(--amber);}
+  .back-link{color:var(--blue);font-size:12px;cursor:pointer;font-family:var(--sans);font-weight:600;margin-bottom:14px;display:inline-block;}
+  .back-link:hover{text-decoration:underline;}
 
-  .member-row{display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:var(--panel-2);border-radius:7px;margin-bottom:6px;gap:10px;}
-  .member-row .name{font-size:13px;font-weight:600;}
+  .member-row{display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:var(--panel-2);border-radius:6px;margin-bottom:6px;gap:10px;border:1px solid var(--line);}
+  .member-row .name{font-size:13px;font-weight:600;color:var(--text);}
   .member-row .r{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap;}
 
   .inline-form{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:12px;}
@@ -190,69 +211,126 @@
   .bell-wrap{position:relative;}
   #bellBtn{position:relative;font-size:14px;padding:7px 11px;}
   .badge-count{
-    position:absolute;top:-6px;right:-6px;background:var(--red);color:#1a0b0c;
+    position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;
     font-family:var(--mono);font-size:10px;font-weight:700;border-radius:999px;
     min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px;
-    animation:pulse-red 2s ease-in-out infinite;
+    animation:pulse-red 2s ease-in-out infinite;border:2px solid var(--navy);
   }
   .bell-dropdown{
     position:absolute;top:calc(100% + 8px);right:0;width:340px;max-height:420px;overflow-y:auto;
-    background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.5);
+    background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow-lg);
     z-index:50;padding:10px;animation:fade-up .15s ease both;
   }
   .bell-dropdown-header{
-    display:flex;align-items:center;justify-content:space-between;font-family:var(--mono);
-    font-size:12px;color:var(--muted);margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;justify-content:space-between;font-family:var(--sans);
+    font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--line);
   }
   .nav-badge{
-    background:var(--red);color:#1a0b0c;font-family:var(--mono);font-size:10px;font-weight:700;
+    background:var(--amber);color:#fff;font-family:var(--mono);font-size:10px;font-weight:700;
     border-radius:999px;min-width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;
     padding:0 5px;margin-left:auto;
   }
 
   /* ---------- modal ---------- */
   .modal-overlay{
-    position:fixed;inset:0;background:rgba(4,5,8,.65);display:flex;align-items:center;justify-content:center;z-index:100;
+    position:fixed;inset:0;background:rgba(22,25,31,.55);display:flex;align-items:center;justify-content:center;z-index:100;
     backdrop-filter:blur(2px);
   }
-  .modal-card{width:400px;max-width:90vw;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px;max-height:85vh;overflow-y:auto;animation:fade-up .18s ease both;}
+  .modal-card{width:400px;max-width:90vw;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:22px;max-height:85vh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:fade-up .18s ease both;}
   .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
   .modal-close{cursor:pointer;font-size:22px;color:var(--muted);line-height:1;padding:4px;}
   .modal-close:hover{color:var(--text);}
 
   /* ---------- kanban board ---------- */
   .board-toggle{display:flex;gap:6px;margin-bottom:14px;}
-  .board-toggle .tab{border:1px solid var(--line);border-radius:7px;padding:7px 13px;border-bottom:1px solid var(--line);}
-  .board-toggle .tab.active{border-color:var(--amber);}
+  .board-toggle .tab{border:1px solid var(--line);border-radius:6px;padding:7px 13px;border-bottom:1px solid var(--line);background:var(--panel);}
+  .board-toggle .tab.active{border-color:var(--blue);background:var(--blue-dim);}
   .kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
-  .kanban-col{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;min-height:120px;transition:border-color .12s ease,background .12s ease;}
+  .kanban-col{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:10px;min-height:120px;transition:border-color .12s ease,background .12s ease;}
   .kanban-col-header{
-    font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);
+    font-family:var(--sans);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);
     margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;
   }
-  .kanban-col.dragover{border-color:var(--amber);background:var(--panel-2);}
+  .kanban-col.dragover{border-color:var(--blue);background:var(--blue-dim);}
   .kanban-card{
-    background:var(--panel-2);border:1px solid var(--line);border-left:3px solid var(--line);border-radius:8px;
+    background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--line);border-radius:6px;
     padding:10px;margin-bottom:8px;cursor:grab;transition:transform .1s ease, box-shadow .12s ease, opacity .12s ease;
+    box-shadow:var(--shadow-sm);
   }
-  .kanban-card:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.3);}
+  .kanban-card:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);}
   .kanban-card.dragging{opacity:.4;}
   .kanban-card.overdue{border-left-color:var(--red);}
   .kanban-card[draggable="false"]{cursor:default;opacity:.75;}
-  .kanban-card .title{font-size:13px;font-weight:600;}
+  .kanban-card .title{font-size:13px;font-weight:600;color:var(--text);}
   .kanban-card .meta{color:var(--muted);font-size:11px;margin-top:4px;font-family:var(--mono);}
+
+  /* ---------- WhatsApp-style messaging ---------- */
+  .wa-shell{display:flex;height:calc(100vh - 160px);min-height:480px;border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:var(--shadow-sm);background:#fff;}
+  .wa-sidebar{width:320px;flex-shrink:0;border-right:1px solid var(--line);display:flex;flex-direction:column;background:#fff;overflow:hidden;}
+  .wa-sidebar-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);background:var(--panel-2);}
+  .wa-new-chat{display:flex;gap:8px;padding:10px 16px;border-bottom:1px solid var(--line);}
+  .wa-new-chat select{flex:1;}
+  #conversationsList{overflow-y:auto;flex:1;margin-top:0 !important;padding:8px;gap:2px;}
+
+  .wa-conv-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;cursor:pointer;transition:background .12s ease;}
+  .wa-conv-item:hover{background:var(--panel-2);}
+  .wa-conv-item.active{background:var(--blue-dim);}
+  .wa-conv-text{flex:1;min-width:0;}
+  .wa-conv-name{font-weight:700;font-size:14px;color:var(--text);}
+  .wa-conv-preview{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px;}
+  .wa-conv-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
+  .wa-conv-time{font-size:10px;color:var(--muted);font-family:var(--mono);}
+
+  .wa-avatar{
+    width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-weight:700;color:#fff;font-size:15px;flex-shrink:0;font-family:var(--sans);
+  }
+
+  .wa-thread{flex:1;display:flex;flex-direction:column;background:#ECE5DD;position:relative;min-width:0;}
+  .wa-thread-embedded{height:520px;border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .wa-thread-empty{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;}
+  .wa-thread-active{display:flex;flex-direction:column;height:100%;}
+  .wa-thread-header{display:flex;align-items:center;gap:10px;padding:12px 14px;background:#075E54;color:#fff;flex-shrink:0;}
+  .wa-thread-header .back-link{color:#fff;display:none;font-size:18px;margin:0;}
+  .wa-thread-header .wa-avatar{width:34px;height:34px;font-size:13px;}
+
+  .wa-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:6px;}
+
+  .wa-bubble-row{display:flex;animation:fade-up .15s ease both;}
+  .wa-bubble-row.out{justify-content:flex-end;}
+  .wa-bubble{
+    max-width:72%;padding:7px 9px 6px;border-radius:8px;font-size:13.5px;line-height:1.35;
+    box-shadow:0 1px 1px rgba(0,0,0,.1);
+  }
+  .wa-bubble.in{background:#fff;border-top-left-radius:2px;}
+  .wa-bubble.out{background:#DCF8C6;border-top-right-radius:2px;}
+  .wa-bubble-text{white-space:pre-wrap;word-break:break-word;color:#111;}
+  .wa-bubble-time{font-size:10px;color:#667781;text-align:right;margin-top:2px;}
+  .wa-bubble img, .wa-bubble video{max-width:100%;max-height:280px;border-radius:6px;display:block;margin-bottom:4px;cursor:pointer;background:#00000010;}
+
+  .wa-input-bar{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#F0F0F0;border-top:1px solid var(--line);flex-shrink:0;}
+  .wa-input-bar input[type=text]{flex:1;border-radius:20px;background:#fff;min-height:40px;border:1px solid var(--line);}
+  .wa-attach-btn, .wa-send-btn{
+    width:38px;height:38px;border-radius:50%;border:none;background:transparent;color:#54656F;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0;
+  }
+  .wa-attach-btn svg, .wa-send-btn svg{width:19px;height:19px;}
+  .wa-attach-btn:hover{background:rgba(0,0,0,.06);}
+  .wa-send-btn{background:#25D366;color:#fff;}
+  .wa-send-btn:hover{background:#1EBE5A;}
+
+  .wa-attach-preview{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#F0F0F0;font-size:12px;color:var(--text);border-top:1px solid var(--line);flex-shrink:0;}
+  .wa-attach-preview .modal-close{font-size:16px;margin-left:auto;}
 
   /* ============================================================
      RESPONSIVE
      ============================================================ */
 
-  /* Tablet: tighten grids, keep sidebar */
   @media (max-width:1000px){
     .main{padding:22px 24px;}
     .grid.cols-3{grid-template-columns:repeat(2,1fr);}
   }
 
-  /* Mobile: sidebar becomes a fixed bottom dock; stack everything */
   @media (max-width:820px){
     .layout{flex-direction:column;min-height:auto;}
     .main{padding:18px 16px calc(var(--dock-h) + 24px);max-width:100%;}
@@ -262,12 +340,12 @@
       position:fixed;bottom:0;left:0;right:0;width:100%;height:var(--dock-h);
       flex-direction:row;justify-content:space-around;align-items:stretch;
       padding:6px 6px calc(6px + env(safe-area-inset-bottom));gap:0;
-      border-right:none;border-top:1px solid var(--line);
-      z-index:40;box-shadow:0 -6px 20px rgba(0,0,0,.35);
+      border-right:none;border-top:1px solid var(--navy-line);
+      z-index:40;box-shadow:0 -6px 20px rgba(0,0,0,.25);
     }
     .nav-item{
       flex-direction:column;justify-content:center;gap:2px;flex:1;padding:4px 2px;
-      font-size:10px;text-align:center;border-radius:9px;
+      font-size:10px;text-align:center;border-radius:8px;
     }
     .nav-label{flex:none;}
     .nav-icon{width:18px;height:18px;}
@@ -292,13 +370,23 @@
       width:100%;max-width:100%;border-radius:16px 16px 0 0;max-height:88vh;
       animation:sheet-up .2s ease both;
     }
-    @keyframes sheet-up{from{transform:translateY(16px);opacity:.6;} to{transform:translateY(0);opacity:1;}}
+
+    /* WhatsApp-style Messages: single pane at a time, list <-> thread */
+    .wa-shell{
+      height:calc(100vh - var(--dock-h) - 130px);border-radius:0;border-left:none;border-right:none;
+      margin:0 -16px;box-shadow:none;
+    }
+    .wa-sidebar{width:100%;}
+    #waShell.show-thread .wa-sidebar{display:none;}
+    #waShell:not(.show-thread) .wa-thread{display:none;}
+    .wa-thread-header .back-link{display:inline-block;}
+    .wa-thread-embedded{height:calc(100vh - var(--dock-h) - 210px);border-radius:0;border-left:none;border-right:none;margin:0 -16px;}
   }
 
   @media (max-width:420px){
     .stat .n{font-size:22px;}
     .row-card{padding:11px 12px;}
-    h1{font-size:18px;}
+    h1{font-size:19px;}
   }
 </style>
 </head>
@@ -541,13 +629,24 @@
       </div>
 
       <div id="pd-chat" class="hidden">
-        <div class="card">
-          <h2>Project chat</h2>
-          <div class="list" id="projectChatList" style="max-height:420px;overflow-y:auto;"></div>
-          <form id="projectChatForm" class="inline-form" style="margin-top:12px">
-            <div style="flex:3"><input type="text" id="projectChatInput" placeholder="Message the project team…" autocomplete="off" required></div>
-            <button class="btn" type="submit">Send</button>
-          </form>
+        <div class="wa-thread wa-thread-embedded">
+          <div class="wa-thread-active">
+            <div class="wa-messages" id="projectChatList"></div>
+            <form id="projectChatForm" class="wa-input-bar">
+              <input type="file" id="projectChatAttachInput" accept="image/*,video/*" class="hidden">
+              <button type="button" class="wa-attach-btn" id="projectChatAttachBtn" title="Attach image or video">
+                <svg viewBox="0 0 20 20" fill="none"><path d="M14.5 7.5 8.4 13.6a3 3 0 1 1-4.24-4.24L10.6 3a2 2 0 1 1 2.83 2.83l-6.36 6.36a1 1 0 1 1-1.41-1.42l5.66-5.65" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <input type="text" id="projectChatInput" placeholder="Message the project team…" autocomplete="off">
+              <button class="wa-send-btn" type="submit" title="Send">
+                <svg viewBox="0 0 20 20" fill="none"><path d="M2.5 10 17 3l-5 14-3-6-6-1Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+              </button>
+            </form>
+            <div class="wa-attach-preview hidden" id="projectChatAttachPreview">
+              <span id="projectChatAttachName"></span>
+              <span class="modal-close" id="projectChatAttachClear">&times;</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -569,25 +668,45 @@
 
     <!-- MESSAGES VIEW -->
     <div id="view-messages" class="hidden">
-      <h1>Messages</h1>
-      <p class="subtitle">Message anyone in the system directly</p>
-
-      <div class="grid dm-layout" style="align-items:start;">
-        <div class="card">
-          <h2>Start a chat</h2>
-          <select id="dmUserPicker" style="margin-bottom:10px"></select>
-          <button class="btn secondary small" id="dmStartBtn" style="width:100%">Open chat</button>
-          <h2 style="margin-top:18px">Conversations</h2>
-          <div class="list" id="conversationsList"></div>
+      <div class="wa-shell" id="waShell">
+        <div class="wa-sidebar" id="waSidebar">
+          <div class="wa-sidebar-header">
+            <h2 style="margin:0;">Chats</h2>
+            <button class="btn secondary small" id="dmNewChatBtn">+ New</button>
+          </div>
+          <div class="wa-new-chat hidden" id="waNewChatPanel">
+            <select id="dmUserPicker"></select>
+            <button class="btn small" id="dmStartBtn">Start</button>
+          </div>
+          <div class="list" id="conversationsList" style="margin-top:10px;"></div>
         </div>
 
-        <div class="card">
-          <h2 id="dmWithName">Select a conversation</h2>
-          <div class="list" id="dmMessageList" style="max-height:420px;overflow-y:auto;"></div>
-          <form id="dmForm" class="inline-form hidden" style="margin-top:12px">
-            <div style="flex:3"><input type="text" id="dmInput" placeholder="Type a message…" autocomplete="off" required></div>
-            <button class="btn" type="submit">Send</button>
-          </form>
+        <div class="wa-thread" id="waThread">
+          <div class="wa-thread-empty" id="waThreadEmpty">
+            <p class="subtitle">Select a conversation to start messaging</p>
+          </div>
+          <div class="wa-thread-active hidden" id="waThreadActive">
+            <div class="wa-thread-header">
+              <span class="back-link" id="waBackBtn">&larr;</span>
+              <span class="wa-avatar" id="dmAvatar"></span>
+              <span id="dmWithName" style="font-weight:700;"></span>
+            </div>
+            <div class="wa-messages" id="dmMessageList"></div>
+            <form id="dmForm" class="wa-input-bar">
+              <input type="file" id="dmAttachInput" accept="image/*,video/*" class="hidden">
+              <button type="button" class="wa-attach-btn" id="dmAttachBtn" title="Attach image or video">
+                <svg viewBox="0 0 20 20" fill="none"><path d="M14.5 7.5 8.4 13.6a3 3 0 1 1-4.24-4.24L10.6 3a2 2 0 1 1 2.83 2.83l-6.36 6.36a1 1 0 1 1-1.41-1.42l5.66-5.65" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <input type="text" id="dmInput" placeholder="Type a message…" autocomplete="off">
+              <button class="wa-send-btn" type="submit" title="Send">
+                <svg viewBox="0 0 20 20" fill="none"><path d="M2.5 10 17 3l-5 14-3-6-6-1Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+              </button>
+            </form>
+            <div class="wa-attach-preview hidden" id="dmAttachPreview">
+              <span id="dmAttachName"></span>
+              <span class="modal-close" id="dmAttachClear">&times;</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -848,10 +967,22 @@ function fmtDate(iso) {
 /* ============================================================
    NOTIFICATION BELL
    ============================================================ */
+// "Due soon" reminders are computed live by the backend from task due
+// dates, not stored -- so they can't be "marked read" server-side.
+// We track dismissed ones here so "Mark all read" can still make the
+// list genuinely go empty for the rest of this session.
+const dismissedDueSoonIds = new Set();
+let lastBellItems = [];
+
+function visibleBellItems() {
+  return lastBellItems.filter(n => !(n.kind === 'due_soon' && dismissedDueSoonIds.has(n.id)));
+}
+
 async function refreshBadges() {
   try {
-    const counts = await api('/api/notifications/unread-count/');
-    const total = (counts.unread_notifications || 0) + (counts.due_soon || 0);
+    lastBellItems = await api('/api/notifications/');
+    const visible = visibleBellItems();
+    const total = visible.filter(n => n.kind === 'due_soon' || !n.is_read).length;
     const bellBadge = $('#bellBadge');
     bellBadge.textContent = total;
     bellBadge.classList.toggle('hidden', total === 0);
@@ -880,29 +1011,33 @@ document.addEventListener('click', (e) => {
   }
 });
 
+function renderBellList(items) {
+  $('#bellList').innerHTML = items.map(n => `
+    <div class="row-card ${n.is_read ? '' : 'overdue'}" style="cursor:default;border-left-color:${n.kind === 'due_soon' ? 'var(--amber)' : (n.is_read ? 'var(--line)' : 'var(--red)')};">
+      <div class="main-txt">
+        <div class="title" style="font-size:12px;">${escapeHtml(n.message)}</div>
+        <div class="meta">${n.project_name ? escapeHtml(n.project_name) + ' · ' : ''}${fmtDate(n.created_at)}</div>
+      </div>
+      ${(n.kind === 'notification' && !n.is_read) ? `<button class="btn secondary small" data-marknotif="${n.id}">Mark read</button>` : ''}
+    </div>
+  `).join('') || '<div class="empty">No notifications.</div>';
+
+  $$('[data-marknotif]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      try {
+        await api(`/api/notifications/${btn.dataset.marknotif}/read/`, { method: 'POST' });
+        loadBellDropdown();
+        refreshBadges();
+      } catch (err) { alert('Could not mark as read: ' + err.message); }
+    });
+  });
+}
+
 async function loadBellDropdown() {
   $('#bellList').innerHTML = '<div class="empty">Loading…</div>';
   try {
-    const items = await api('/api/notifications/');
-    $('#bellList').innerHTML = items.map(n => `
-      <div class="row-card ${n.is_read ? '' : 'overdue'}" style="cursor:default;border-left-color:${n.kind === 'due_soon' ? 'var(--amber)' : (n.is_read ? 'var(--line)' : 'var(--red)')};">
-        <div class="main-txt">
-          <div class="title" style="font-size:12px;">${escapeHtml(n.message)}</div>
-          <div class="meta">${n.project_name ? escapeHtml(n.project_name) + ' · ' : ''}${fmtDate(n.created_at)}</div>
-        </div>
-        ${(n.kind === 'notification' && !n.is_read) ? `<button class="btn secondary small" data-marknotif="${n.id}">Mark read</button>` : ''}
-      </div>
-    `).join('') || '<div class="empty">No notifications.</div>';
-
-    $$('[data-marknotif]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        try {
-          await api(`/api/notifications/${btn.dataset.marknotif}/read/`, { method: 'POST' });
-          loadBellDropdown();
-          refreshBadges();
-        } catch (err) { alert('Could not mark as read: ' + err.message); }
-      });
-    });
+    lastBellItems = await api('/api/notifications/');
+    renderBellList(visibleBellItems());
   } catch (err) {
     $('#bellList').innerHTML = `<div class="msg error">${escapeHtml(err.message)}</div>`;
   }
@@ -912,8 +1047,12 @@ $('#markAllReadBtn').addEventListener('click', async (e) => {
   e.stopPropagation();
   try {
     await api('/api/notifications/read-all/', { method: 'POST' });
-    loadBellDropdown();
-    refreshBadges();
+    // Dismiss every currently-visible "due soon" reminder too, so the
+    // list actually clears instead of leaving those behind.
+    lastBellItems.filter(n => n.kind === 'due_soon').forEach(n => dismissedDueSoonIds.add(n.id));
+    renderBellList([]);
+    $('#bellBadge').classList.add('hidden');
+    $('#bellBadge').textContent = '0';
   } catch (err) { alert('Could not mark all as read: ' + err.message); }
 });
 
@@ -1354,6 +1493,7 @@ $('#submissionForm').addEventListener('submit', async (e) => {
    PROJECT CHAT
    ============================================================ */
 let projectChatPollHandle = null;
+let projectChatAttachedFile = null;
 
 function startProjectChatPolling() {
   stopProjectChatPolling();
@@ -1371,7 +1511,7 @@ async function loadProjectChat() {
     const messages = data.results || data;
     const list = $('#projectChatList');
     const wasAtBottom = list.scrollTop + list.clientHeight >= list.scrollHeight - 20;
-    list.innerHTML = messages.map(m => renderChatBubble(m.sender, m.content, m.created_at)).join('') ||
+    list.innerHTML = messages.map(m => renderChatBubble(m)).join('') ||
       '<div class="empty">No messages yet — say hi.</div>';
     if (wasAtBottom) list.scrollTop = list.scrollHeight;
   } catch (err) {
@@ -1379,29 +1519,77 @@ async function loadProjectChat() {
   }
 }
 
-function renderChatBubble(sender, content, createdAt) {
-  const mine = sender.id === state.user.id;
+const AVATAR_COLORS = ['#F5A93F','#0972D3','#1D8102','#D91515','#7A5AF8','#EC7211','#00A884','#B3364A'];
+function avatarColorFor(username) {
+  let hash = 0;
+  for (let i = 0; i < username.length; i++) hash = username.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+function avatarHtml(username) {
+  const initial = (username || '?').charAt(0).toUpperCase();
+  return `<span class="wa-avatar" style="background:${avatarColorFor(username)}">${escapeHtml(initial)}</span>`;
+}
+
+function renderChatBubble(m) {
+  const mine = m.sender.id === state.user.id;
+  const time = new Date(m.created_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  let mediaHtml = '';
+  if (m.attachment_url) {
+    mediaHtml = m.attachment_type === 'video'
+      ? `<video src="${escapeHtml(m.attachment_url)}" controls></video>`
+      : `<img src="${escapeHtml(m.attachment_url)}" alt="attachment" onclick="window.open('${escapeHtml(m.attachment_url)}','_blank')">`;
+  }
+  const textHtml = m.content ? `<div class="wa-bubble-text">${escapeHtml(m.content)}</div>` : '';
   return `
-    <div class="row-card" style="cursor:default;border-left-color:${mine ? 'var(--amber)' : 'var(--line)'};">
-      <div class="main-txt">
-        <div class="meta">${escapeHtml(sender.username)} · ${fmtDate(createdAt)}</div>
-        <div style="margin-top:2px;font-size:13px;">${escapeHtml(content)}</div>
+    <div class="wa-bubble-row ${mine ? 'out' : 'in'}">
+      <div class="wa-bubble ${mine ? 'out' : 'in'}">
+        ${!mine ? `<div class="wa-bubble-time" style="text-align:left;font-weight:700;color:${avatarColorFor(m.sender.username)}">${escapeHtml(m.sender.username)}</div>` : ''}
+        ${mediaHtml}
+        ${textHtml}
+        <div class="wa-bubble-time">${time}</div>
       </div>
     </div>
   `;
 }
 
+function wireAttachButton(btnId, inputId, previewId, nameId, clearId, onChange) {
+  $(btnId).addEventListener('click', () => $(inputId).click());
+  $(inputId).addEventListener('change', () => {
+    const file = $(inputId).files[0];
+    onChange(file || null);
+    $(previewId).classList.toggle('hidden', !file);
+    if (file) $(nameId).textContent = `📎 ${file.name}`;
+  });
+  $(clearId).addEventListener('click', () => {
+    $(inputId).value = '';
+    onChange(null);
+    $(previewId).classList.add('hidden');
+  });
+}
+
+wireAttachButton('#projectChatAttachBtn', '#projectChatAttachInput', '#projectChatAttachPreview', '#projectChatAttachName', '#projectChatAttachClear',
+  (file) => { projectChatAttachedFile = file; });
+
 $('#projectChatForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const input = $('#projectChatInput');
   const content = input.value.trim();
-  if (!content) return;
+  if (!content && !projectChatAttachedFile) return;
   input.value = '';
+  const file = projectChatAttachedFile;
+  projectChatAttachedFile = null;
+  $('#projectChatAttachInput').value = '';
+  $('#projectChatAttachPreview').classList.add('hidden');
   try {
-    await api('/api/chat/project-messages/', {
-      method: 'POST',
-      body: { project: state.currentProject.id, content },
-    });
+    if (file) {
+      const fd = new FormData();
+      fd.append('project', state.currentProject.id);
+      fd.append('content', content);
+      fd.append('attachment', file);
+      await api('/api/chat/project-messages/', { method: 'POST', body: fd, isForm: true });
+    } else {
+      await api('/api/chat/project-messages/', { method: 'POST', body: { project: state.currentProject.id, content } });
+    }
     loadProjectChat();
   } catch (err) {
     alert('Could not send message: ' + err.message);
@@ -1413,6 +1601,7 @@ $('#projectChatForm').addEventListener('submit', async (e) => {
    ============================================================ */
 let dmPollHandle = null;
 let dmCurrentUserId = null;
+let dmAttachedFile = null;
 
 function stopDmPolling() {
   if (dmPollHandle) { clearInterval(dmPollHandle); dmPollHandle = null; }
@@ -1421,9 +1610,10 @@ function stopDmPolling() {
 async function loadMessagesView() {
   stopDmPolling();
   dmCurrentUserId = null;
-  $('#dmWithName').textContent = 'Select a conversation';
-  $('#dmMessageList').innerHTML = '';
-  $('#dmForm').classList.add('hidden');
+  $('#waShell').classList.remove('show-thread');
+  $('#waThreadEmpty').classList.remove('hidden');
+  $('#waThreadActive').classList.add('hidden');
+  $('#waNewChatPanel').classList.add('hidden');
 
   const picker = $('#dmUserPicker');
   picker.innerHTML = state.users
@@ -1433,17 +1623,30 @@ async function loadMessagesView() {
   loadConversations();
 }
 
+$('#dmNewChatBtn').addEventListener('click', () => {
+  $('#waNewChatPanel').classList.toggle('hidden');
+});
+
 async function loadConversations() {
   try {
     const convos = await api('/api/chat/conversations/');
     $('#conversationsList').innerHTML = convos.map(c => `
-      <div class="row-card" data-dmuser="${c.user.id}" data-dmname="${escapeHtml(c.user.username)}">
-        <div class="main-txt">
-          <div class="title">${escapeHtml(c.user.username)} ${c.unread_count > 0 ? `<span class="badge high">${c.unread_count} new</span>` : ''}</div>
-          <div class="meta">${escapeHtml(c.last_message).slice(0, 60)}</div>
+      <div class="wa-conv-item ${dmCurrentUserId === c.user.id ? 'active' : ''}" data-dmuser="${c.user.id}" data-dmname="${escapeHtml(c.user.username)}">
+        ${avatarHtml(c.user.username)}
+        <div class="wa-conv-text">
+          <div class="wa-conv-name">${escapeHtml(c.user.username)}</div>
+          <div class="wa-conv-preview">${
+            c.last_message_attachment_type === 'video' ? '🎥 Video'
+            : c.last_message_attachment_type === 'image' ? '📷 Photo'
+            : escapeHtml(c.last_message || '').slice(0, 40)
+          }</div>
+        </div>
+        <div class="wa-conv-meta">
+          <span class="wa-conv-time">${fmtDate(c.last_message_at).split(' ').slice(-2).join(' ')}</span>
+          ${c.unread_count > 0 ? `<span class="badge high">${c.unread_count}</span>` : ''}
         </div>
       </div>
-    `).join('') || '<div class="empty">No conversations yet</div>';
+    `).join('') || '<div class="empty">No conversations yet — tap + New to start one.</div>';
     $$('#conversationsList [data-dmuser]').forEach(el => {
       el.addEventListener('click', () => openDmThread(parseInt(el.dataset.dmuser), el.dataset.dmname));
     });
@@ -1455,15 +1658,28 @@ async function loadConversations() {
 $('#dmStartBtn').addEventListener('click', () => {
   const picker = $('#dmUserPicker');
   if (!picker.value) return;
-  openDmThread(parseInt(picker.value), picker.options[picker.selectedIndex].text);
+  openDmThread(parseInt(picker.value), picker.options[picker.selectedIndex].text.replace(/\s*\(.*\)$/, ''));
+});
+
+$('#waBackBtn').addEventListener('click', () => {
+  $('#waShell').classList.remove('show-thread');
+  stopDmPolling();
+  dmCurrentUserId = null;
 });
 
 function openDmThread(userId, username) {
   dmCurrentUserId = userId;
   $('#dmWithName').textContent = username;
-  $('#dmForm').classList.remove('hidden');
+  const avatarEl = $('#dmAvatar');
+  avatarEl.textContent = (username || '?').charAt(0).toUpperCase();
+  avatarEl.style.background = avatarColorFor(username);
+  $('#waThreadEmpty').classList.add('hidden');
+  $('#waThreadActive').classList.remove('hidden');
+  $('#waShell').classList.add('show-thread');
+  $('#waNewChatPanel').classList.add('hidden');
   loadDmThread();
   refreshBadges();
+  loadConversations();
   stopDmPolling();
   dmPollHandle = setInterval(loadDmThread, 4000);
 }
@@ -1475,7 +1691,7 @@ async function loadDmThread() {
     const messages = data.results || data;
     const list = $('#dmMessageList');
     const wasAtBottom = list.scrollTop + list.clientHeight >= list.scrollHeight - 20;
-    list.innerHTML = messages.map(m => renderChatBubble(m.sender, m.content, m.created_at)).join('') ||
+    list.innerHTML = messages.map(m => renderChatBubble(m)).join('') ||
       '<div class="empty">No messages yet — say hi.</div>';
     if (wasAtBottom) list.scrollTop = list.scrollHeight;
   } catch (err) {
@@ -1483,18 +1699,30 @@ async function loadDmThread() {
   }
 }
 
+wireAttachButton('#dmAttachBtn', '#dmAttachInput', '#dmAttachPreview', '#dmAttachName', '#dmAttachClear',
+  (file) => { dmAttachedFile = file; });
+
 $('#dmForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!dmCurrentUserId) return;
   const input = $('#dmInput');
   const content = input.value.trim();
-  if (!content) return;
+  if (!content && !dmAttachedFile) return;
   input.value = '';
+  const file = dmAttachedFile;
+  dmAttachedFile = null;
+  $('#dmAttachInput').value = '';
+  $('#dmAttachPreview').classList.add('hidden');
   try {
-    await api('/api/chat/direct-messages/', {
-      method: 'POST',
-      body: { recipient_id: dmCurrentUserId, content },
-    });
+    if (file) {
+      const fd = new FormData();
+      fd.append('recipient_id', dmCurrentUserId);
+      fd.append('content', content);
+      fd.append('attachment', file);
+      await api('/api/chat/direct-messages/', { method: 'POST', body: fd, isForm: true });
+    } else {
+      await api('/api/chat/direct-messages/', { method: 'POST', body: { recipient_id: dmCurrentUserId, content } });
+    }
     loadDmThread();
     loadConversations();
   } catch (err) {
