@@ -42,10 +42,54 @@
     --shadow-sm:0 1px 2px rgba(22,25,31,.08);
     --shadow-md:0 4px 14px rgba(22,25,31,.10);
     --shadow-lg:0 12px 32px rgba(22,25,31,.18);
+
+    /* Messaging -- own palette (brand blue/orange, not a WhatsApp clone) */
+    --chat-bg:#F4F6F8;
+    --chat-header-bg:var(--navy);
+    --chat-header-text:#FFFFFF;
+    --chat-header-sub:var(--navy-muted);
+    --bubble-in-bg:#FFFFFF;
+    --bubble-in-text:var(--text);
+    --bubble-out-bg:var(--blue);
+    --bubble-out-text:#FFFFFF;
+    --input-bar-bg:#FFFFFF;
+    --input-field-bg:#F2F3F3;
+    --send-btn-bg:var(--amber);
+    --send-btn-text:#FFFFFF;
+    --attach-icon-color:var(--muted);
   }
+
+  /* ---------- dark theme ---------- */
+  :root[data-theme="dark"]{
+    --ink:#0B0D12;
+    --panel:#151A21;
+    --panel-2:#1C222B;
+    --line:#2A313D;
+    --text:#ECEEF2;
+    --muted:#8891A3;
+
+    --amber-dim:#3D2C14;
+    --teal-dim:#123326;
+    --red-dim:#3A1620;
+    --blue-dim:#122A45;
+
+    --shadow-sm:0 1px 2px rgba(0,0,0,.35);
+    --shadow-md:0 4px 14px rgba(0,0,0,.4);
+    --shadow-lg:0 12px 32px rgba(0,0,0,.55);
+
+    --chat-bg:#0D1117;
+    --chat-header-bg:#1A2433;
+    --bubble-in-bg:#1F2733;
+    --bubble-in-text:#ECEEF2;
+    --bubble-out-bg:#1466B3;
+    --input-bar-bg:#151A21;
+    --input-field-bg:#0D1117;
+    --attach-icon-color:#8891A3;
+  }
+  :root[data-theme="dark"] ::selection{background:#1466B3;color:#fff;}
   *{box-sizing:border-box;}
   html{-webkit-text-size-adjust:100%;}
-  body{margin:0;background:var(--ink);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased;}
+  body{margin:0;background:var(--ink);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased;transition:background-color .2s ease, color .2s ease;}
   ::selection{background:var(--amber-dim);color:var(--text);}
   a{color:var(--blue);}
 
@@ -104,9 +148,9 @@
   }
   .btn:hover{background:var(--amber-hover);border-color:var(--amber-hover);box-shadow:var(--shadow-sm);}
   .btn:active{transform:translateY(1px);}
-  .btn.secondary{background:#fff;color:var(--blue);border:1px solid var(--blue);}
+  .btn.secondary{background:var(--panel);color:var(--blue);border:1px solid var(--blue);}
   .btn.secondary:hover{background:var(--blue-dim);box-shadow:none;}
-  .btn.danger{background:#fff;color:var(--red);border:1px solid var(--red);}
+  .btn.danger{background:var(--panel);color:var(--red);border:1px solid var(--red);}
   .btn.danger:hover{background:var(--red-dim);}
   .btn.small{padding:6px 11px;font-size:12px;min-height:32px;}
   .btn:disabled{opacity:.45;cursor:not-allowed;}
@@ -128,7 +172,7 @@
   .nav-item.active{background:var(--amber-dim);color:var(--amber-hover);}
   .nav-icon{width:16px;height:16px;flex-shrink:0;color:inherit;}
   .nav-label{flex:1;}
-  .main{flex:1;padding:26px 32px;max-width:1080px;width:100%;}
+  .main{flex:1;padding:26px 32px;max-width:1300px;width:100%;height:100%;}
 
   h1{font-family:var(--sans);font-size:clamp(19px,3.6vw,23px);font-weight:800;margin:0 0 4px;letter-spacing:-0.01em;color:var(--text);}
   h2{font-family:var(--sans);font-size:15px;font-weight:700;margin:0 0 12px;color:var(--text);}
@@ -171,7 +215,7 @@
   .badge.high{background:var(--red-dim);color:var(--red);}
 
   select, input[type=text], input[type=email], input[type=password], input[type=datetime-local], textarea{
-    background:#fff;border:1px solid var(--line);color:var(--text);border-radius:6px;
+    background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:6px;
     padding:9px 10px;font-family:var(--sans);font-size:13px;width:100%;min-height:38px;
   }
   textarea{min-height:unset;}
@@ -264,9 +308,9 @@
   .kanban-card .title{font-size:13px;font-weight:600;color:var(--text);}
   .kanban-card .meta{color:var(--muted);font-size:11px;margin-top:4px;font-family:var(--mono);}
 
-  /* ---------- WhatsApp-style messaging ---------- */
-  .wa-shell{display:flex;height:calc(100vh - 160px);min-height:480px;border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:var(--shadow-sm);background:#fff;}
-  .wa-sidebar{width:320px;flex-shrink:0;border-right:1px solid var(--line);display:flex;flex-direction:column;background:#fff;overflow:hidden;}
+  /* ---------- messaging (own color system, theme-aware) ---------- */
+  .wa-shell{display:flex;height:calc(100vh - 160px);min-height:480px;border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:var(--shadow-sm);background:var(--panel);}
+  .wa-sidebar{width:320px;flex-shrink:0;border-right:1px solid var(--line);display:flex;flex-direction:column;background:var(--panel);overflow:hidden;}
   .wa-sidebar-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);background:var(--panel-2);}
   .wa-new-chat{display:flex;gap:8px;padding:10px 16px;border-bottom:1px solid var(--line);}
   .wa-new-chat select{flex:1;}
@@ -283,44 +327,74 @@
 
   .wa-avatar{
     width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-    font-weight:700;color:#fff;font-size:15px;flex-shrink:0;font-family:var(--sans);
+    font-weight:700;color:#fff;font-size:15px;flex-shrink:0;font-family:var(--sans);overflow:hidden;
   }
+  .wa-avatar img{width:100%;height:100%;object-fit:cover;}
+  .wa-avatar-lg{width:96px;height:96px;font-size:32px;cursor:pointer;}
 
-  .wa-thread{flex:1;display:flex;flex-direction:column;background:#ECE5DD;position:relative;min-width:0;}
+  .wa-thread{flex:1;display:flex;flex-direction:column;background:var(--chat-bg);position:relative;min-width:0;}
   .wa-thread-embedded{height:520px;border:1px solid var(--line);border-radius:10px;overflow:hidden;}
   .wa-thread-empty{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;}
   .wa-thread-active{display:flex;flex-direction:column;height:100%;}
-  .wa-thread-header{display:flex;align-items:center;gap:10px;padding:12px 14px;background:#075E54;color:#fff;flex-shrink:0;}
-  .wa-thread-header .back-link{color:#fff;display:none;font-size:18px;margin:0;}
+  .wa-thread-header{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--chat-header-bg);color:var(--chat-header-text);flex-shrink:0;cursor:pointer;}
+  .wa-thread-header .back-link{color:var(--chat-header-text);display:none;font-size:18px;margin:0;}
   .wa-thread-header .wa-avatar{width:34px;height:34px;font-size:13px;}
+  .wa-thread-header-info{display:flex;flex-direction:column;line-height:1.25;}
+  .wa-thread-header-sub{font-size:11px;color:var(--chat-header-sub);font-family:var(--mono);}
 
   .wa-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:6px;}
 
   .wa-bubble-row{display:flex;animation:fade-up .15s ease both;}
   .wa-bubble-row.out{justify-content:flex-end;}
   .wa-bubble{
-    max-width:72%;padding:7px 9px 6px;border-radius:8px;font-size:13.5px;line-height:1.35;
+    max-width:72%;padding:7px 9px 6px;border-radius:10px;font-size:13.5px;line-height:1.35;
     box-shadow:0 1px 1px rgba(0,0,0,.1);
   }
-  .wa-bubble.in{background:#fff;border-top-left-radius:2px;}
-  .wa-bubble.out{background:#DCF8C6;border-top-right-radius:2px;}
-  .wa-bubble-text{white-space:pre-wrap;word-break:break-word;color:#111;}
-  .wa-bubble-time{font-size:10px;color:#667781;text-align:right;margin-top:2px;}
+  .wa-bubble.in{background:var(--bubble-in-bg);color:var(--bubble-in-text);border-top-left-radius:2px;}
+  .wa-bubble.out{background:var(--bubble-out-bg);color:var(--bubble-out-text);border-top-right-radius:2px;}
+  .wa-bubble-text{white-space:pre-wrap;word-break:break-word;}
+  .wa-bubble-time{font-size:10px;opacity:.65;text-align:right;margin-top:2px;}
   .wa-bubble img, .wa-bubble video{max-width:100%;max-height:280px;border-radius:6px;display:block;margin-bottom:4px;cursor:pointer;background:#00000010;}
 
-  .wa-input-bar{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#F0F0F0;border-top:1px solid var(--line);flex-shrink:0;}
-  .wa-input-bar input[type=text]{flex:1;border-radius:20px;background:#fff;min-height:40px;border:1px solid var(--line);}
+  .wa-input-bar{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--input-bar-bg);border-top:1px solid var(--line);flex-shrink:0;}
+  .wa-input-bar input[type=text]{flex:1;border-radius:20px;background:var(--input-field-bg);min-height:40px;border:1px solid var(--line);}
   .wa-attach-btn, .wa-send-btn{
-    width:38px;height:38px;border-radius:50%;border:none;background:transparent;color:#54656F;
+    width:38px;height:38px;border-radius:50%;border:none;background:transparent;color:var(--attach-icon-color);
     display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0;
   }
   .wa-attach-btn svg, .wa-send-btn svg{width:19px;height:19px;}
-  .wa-attach-btn:hover{background:rgba(0,0,0,.06);}
-  .wa-send-btn{background:#25D366;color:#fff;}
-  .wa-send-btn:hover{background:#1EBE5A;}
+  .wa-attach-btn:hover{background:var(--panel-2);}
+  .wa-send-btn{background:var(--send-btn-bg);color:var(--send-btn-text);}
+  .wa-send-btn:hover{filter:brightness(1.1);}
 
-  .wa-attach-preview{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#F0F0F0;font-size:12px;color:var(--text);border-top:1px solid var(--line);flex-shrink:0;}
+  .wa-attach-preview{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--input-bar-bg);font-size:12px;color:var(--text);border-top:1px solid var(--line);flex-shrink:0;}
   .wa-attach-preview .modal-close{font-size:16px;margin-left:auto;}
+
+  /* ---------- contact/profile info panel (3rd column on wide screens) ---------- */
+  .wa-profile{
+    width:0;flex-shrink:0;border-left:1px solid var(--line);background:var(--panel);
+    display:flex;flex-direction:column;align-items:center;text-align:center;overflow:hidden;
+    padding:0;transition:width .15s ease, padding .15s ease;
+  }
+  #waShell.show-profile .wa-profile{width:260px;padding:28px 18px;overflow-y:auto;}
+  .wa-profile-name{font-weight:700;font-size:16px;margin-top:14px;color:var(--text);}
+  .wa-profile-role{margin-top:4px;}
+  .wa-profile-bio{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.5;}
+  .wa-profile-field{width:100%;text-align:left;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);}
+  .wa-profile-field .l{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);}
+  .wa-profile-field .v{font-size:13px;color:var(--text);margin-top:3px;word-break:break-word;}
+
+  /* ---------- image lightbox ---------- */
+  #imgLightbox{cursor:zoom-out;}
+  #imgLightboxImg{max-width:92vw;max-height:92vh;border-radius:8px;box-shadow:var(--shadow-lg);}
+
+  /* ---------- theme toggle ---------- */
+  .theme-toggle{
+    display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;
+    border:1px solid var(--navy-line);background:transparent;color:var(--navy-text);cursor:pointer;flex-shrink:0;
+  }
+  .theme-toggle:hover{border-color:var(--amber);color:var(--amber);}
+  .theme-toggle svg{width:17px;height:17px;}
 
   /* ============================================================
      RESPONSIVE
@@ -329,6 +403,8 @@
   @media (max-width:1000px){
     .main{padding:22px 24px;}
     .grid.cols-3{grid-template-columns:repeat(2,1fr);}
+    /* Not enough room for a docked 3rd column -- profile becomes a modal instead (handled in JS) */
+    #waShell.show-profile .wa-profile{width:0 !important;padding:0 !important;border-left:none;}
   }
 
   @media (max-width:820px){
@@ -396,6 +472,10 @@
   <div class="brand"><span class="dot"></span> WRKFLW</div>
   <div class="conn" id="connIndicator"><span class="led"></span><span id="connLabel">checking…</span></div>
   <div class="spacer"></div>
+  <button class="theme-toggle" id="themeToggleBtn" title="Toggle dark mode">
+    <svg id="themeIconMoon" viewBox="0 0 20 20" fill="none"><path d="M17 11.2A7.5 7.5 0 0 1 8.8 3 7.5 7.5 0 1 0 17 11.2Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+    <svg id="themeIconSun" class="hidden" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3.6" stroke="currentColor" stroke-width="1.4"/><path d="M10 1.8v2M10 16.2v2M18.2 10h-2M3.8 10h-2M15.6 4.4l-1.4 1.4M5.8 14.2l-1.4 1.4M15.6 15.6l-1.4-1.4M5.8 5.8 4.4 4.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+  </button>
   <div class="bell-wrap hidden" id="bellWrap">
     <button class="btn secondary small" id="bellBtn">🔔<span class="badge-count hidden" id="bellBadge">0</span></button>
     <div class="bell-dropdown hidden" id="bellDropdown">
@@ -406,9 +486,17 @@
       <div class="list" id="bellList"></div>
     </div>
   </div>
-  <div class="who hidden" id="whoBox"></div>
+  <div class="who hidden" id="whoBox" style="display:flex;align-items:center;gap:8px;">
+    <span class="wa-avatar" id="whoAvatar" style="width:28px;height:28px;font-size:12px;cursor:pointer;"></span>
+    <span id="whoText"></span>
+  </div>
   <button class="btn secondary small hidden" id="accountBtn">Account</button>
   <button class="btn secondary small hidden" id="logoutBtn">Log out</button>
+</div>
+
+<!-- IMAGE LIGHTBOX -->
+<div class="modal-overlay hidden" id="imgLightbox">
+  <img id="imgLightboxImg" src="" alt="">
 </div>
 
 <!-- ACCOUNT / CHANGE PASSWORD MODAL -->
@@ -419,7 +507,27 @@
       <span class="modal-close" id="accountModalClose">&times;</span>
     </div>
     <p class="meta" id="accountInfo" style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:14px;"></p>
-    <h2>Change password</h2>
+
+    <h2>Profile</h2>
+    <form id="profileForm">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <span class="wa-avatar wa-avatar-lg" id="profileAvatarPreview" style="width:64px;height:64px;font-size:24px;cursor:default;"></span>
+        <div style="flex:1;">
+          <label style="margin-top:0;">Profile picture</label>
+          <input type="file" id="profileAvatarInput" accept="image/*">
+        </div>
+      </div>
+      <div class="inline-form">
+        <div><label>First name</label><input type="text" id="profileFirstName"></div>
+        <div><label>Last name</label><input type="text" id="profileLastName"></div>
+      </div>
+      <label>Bio</label>
+      <textarea id="profileBio" rows="2" maxlength="160" placeholder="A short line about you"></textarea>
+      <button class="btn" type="submit">Save profile</button>
+    </form>
+    <div class="msg hidden" id="profileMsg"></div>
+
+    <h2 style="margin-top:22px">Change password</h2>
     <form id="changePasswordForm">
       <label>Current password</label>
       <input type="password" id="cpCurrent" required>
@@ -686,10 +794,13 @@
             <p class="subtitle">Select a conversation to start messaging</p>
           </div>
           <div class="wa-thread-active hidden" id="waThreadActive">
-            <div class="wa-thread-header">
+            <div class="wa-thread-header" id="waThreadHeaderClickable">
               <span class="back-link" id="waBackBtn">&larr;</span>
               <span class="wa-avatar" id="dmAvatar"></span>
-              <span id="dmWithName" style="font-weight:700;"></span>
+              <div class="wa-thread-header-info">
+                <span id="dmWithName" style="font-weight:700;"></span>
+                <span class="wa-thread-header-sub" id="dmWithRole"></span>
+              </div>
             </div>
             <div class="wa-messages" id="dmMessageList"></div>
             <form id="dmForm" class="wa-input-bar">
@@ -706,6 +817,17 @@
               <span id="dmAttachName"></span>
               <span class="modal-close" id="dmAttachClear">&times;</span>
             </div>
+          </div>
+        </div>
+
+        <div class="wa-profile" id="waProfilePanel">
+          <span class="wa-avatar wa-avatar-lg" id="waProfileAvatar"></span>
+          <div class="wa-profile-name" id="waProfileName"></div>
+          <span class="role-pill" id="waProfileRole" style="margin-top:6px;"></span>
+          <div class="wa-profile-bio" id="waProfileBio"></div>
+          <div class="wa-profile-field">
+            <div class="l">Email</div>
+            <div class="v" id="waProfileEmail"></div>
           </div>
         </div>
       </div>
@@ -948,7 +1070,9 @@ async function enterApp() {
   $('#logoutBtn').classList.remove('hidden');
   $('#accountBtn').classList.remove('hidden');
   $('#bellWrap').classList.remove('hidden');
-  $('#whoBox').innerHTML = `<b>${escapeHtml(state.user.username)}</b><span class="role-pill">${state.user.role}</span>`;
+  $('#whoText').innerHTML = `<b>${escapeHtml(state.user.username)}</b><span class="role-pill">${state.user.role}</span>`;
+  setAvatarEl($('#whoAvatar'), state.user);
+  $('#whoAvatar').addEventListener('click', () => $('#accountBtn').click());
   try { const u = await api('/api/auth/users/'); state.users = u.results || u; } catch(e){}
   showView('dashboard');
   refreshBadges();
@@ -967,22 +1091,25 @@ function fmtDate(iso) {
 /* ============================================================
    NOTIFICATION BELL
    ============================================================ */
-// "Due soon" reminders are computed live by the backend from task due
-// dates, not stored -- so they can't be "marked read" server-side.
-// We track dismissed ones here so "Mark all read" can still make the
-// list genuinely go empty for the rest of this session.
+// The bell only ever shows UNREAD items. Real notifications that have
+// been marked read (individually or via "Mark all read") are filtered
+// out here and will never reappear. "Due soon" reminders are computed
+// live by the backend (not stored), so we track dismissed ones
+// ourselves for the same "never comes back" behavior.
 const dismissedDueSoonIds = new Set();
 let lastBellItems = [];
 
 function visibleBellItems() {
-  return lastBellItems.filter(n => !(n.kind === 'due_soon' && dismissedDueSoonIds.has(n.id)));
+  return lastBellItems.filter(n => {
+    if (n.kind === 'due_soon') return !dismissedDueSoonIds.has(n.id);
+    return !n.is_read;
+  });
 }
 
 async function refreshBadges() {
   try {
     lastBellItems = await api('/api/notifications/');
-    const visible = visibleBellItems();
-    const total = visible.filter(n => n.kind === 'due_soon' || !n.is_read).length;
+    const total = visibleBellItems().length;
     const bellBadge = $('#bellBadge');
     bellBadge.textContent = total;
     bellBadge.classList.toggle('hidden', total === 0);
@@ -1013,12 +1140,12 @@ document.addEventListener('click', (e) => {
 
 function renderBellList(items) {
   $('#bellList').innerHTML = items.map(n => `
-    <div class="row-card ${n.is_read ? '' : 'overdue'}" style="cursor:default;border-left-color:${n.kind === 'due_soon' ? 'var(--amber)' : (n.is_read ? 'var(--line)' : 'var(--red)')};">
+    <div class="row-card overdue" style="cursor:default;border-left-color:${n.kind === 'due_soon' ? 'var(--amber)' : 'var(--red)'};">
       <div class="main-txt">
         <div class="title" style="font-size:12px;">${escapeHtml(n.message)}</div>
         <div class="meta">${n.project_name ? escapeHtml(n.project_name) + ' · ' : ''}${fmtDate(n.created_at)}</div>
       </div>
-      ${(n.kind === 'notification' && !n.is_read) ? `<button class="btn secondary small" data-marknotif="${n.id}">Mark read</button>` : ''}
+      ${n.kind === 'notification' ? `<button class="btn secondary small" data-marknotif="${n.id}">Mark read</button>` : ''}
     </div>
   `).join('') || '<div class="empty">No notifications.</div>';
 
@@ -1026,7 +1153,9 @@ function renderBellList(items) {
     btn.addEventListener('click', async () => {
       try {
         await api(`/api/notifications/${btn.dataset.marknotif}/read/`, { method: 'POST' });
-        loadBellDropdown();
+        const item = lastBellItems.find(n => String(n.id) === btn.dataset.marknotif);
+        if (item) item.is_read = true;
+        renderBellList(visibleBellItems());
         refreshBadges();
       } catch (err) { alert('Could not mark as read: ' + err.message); }
     });
@@ -1049,7 +1178,10 @@ $('#markAllReadBtn').addEventListener('click', async (e) => {
     await api('/api/notifications/read-all/', { method: 'POST' });
     // Dismiss every currently-visible "due soon" reminder too, so the
     // list actually clears instead of leaving those behind.
-    lastBellItems.filter(n => n.kind === 'due_soon').forEach(n => dismissedDueSoonIds.add(n.id));
+    lastBellItems.forEach(n => {
+      if (n.kind === 'due_soon') dismissedDueSoonIds.add(n.id);
+      else n.is_read = true;
+    });
     renderBellList([]);
     $('#bellBadge').classList.add('hidden');
     $('#bellBadge').textContent = '0';
@@ -1063,6 +1195,13 @@ $('#accountBtn').addEventListener('click', () => {
   $('#accountInfo').textContent = `${state.user.username} · ${state.user.email || ''} · role: ${state.user.role}`;
   $('#cpCurrent').value = ''; $('#cpNew').value = ''; $('#cpNew2').value = '';
   $('#changePasswordMsg').classList.add('hidden');
+  $('#profileMsg').classList.add('hidden');
+  $('#profileFirstName').value = state.user.first_name || '';
+  $('#profileLastName').value = state.user.last_name || '';
+  $('#profileBio').value = state.user.bio || '';
+  profileAvatarFile = null;
+  $('#profileAvatarInput').value = '';
+  setAvatarEl($('#profileAvatarPreview'), state.user);
   $('#accountModal').classList.remove('hidden');
 });
 $('#accountModalClose').addEventListener('click', () => $('#accountModal').classList.add('hidden'));
@@ -1522,12 +1661,26 @@ async function loadProjectChat() {
 const AVATAR_COLORS = ['#F5A93F','#0972D3','#1D8102','#D91515','#7A5AF8','#EC7211','#00A884','#B3364A'];
 function avatarColorFor(username) {
   let hash = 0;
-  for (let i = 0; i < username.length; i++) hash = username.charCodeAt(i) + ((hash << 5) - hash);
+  const s = username || '?';
+  for (let i = 0; i < s.length; i++) hash = s.charCodeAt(i) + ((hash << 5) - hash);
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
-function avatarHtml(username) {
-  const initial = (username || '?').charAt(0).toUpperCase();
-  return `<span class="wa-avatar" style="background:${avatarColorFor(username)}">${escapeHtml(initial)}</span>`;
+function avatarHtml(user, extraClass) {
+  if (user && user.avatar_url) {
+    return `<span class="wa-avatar ${extraClass || ''}"><img src="${escapeHtml(user.avatar_url)}" alt=""></span>`;
+  }
+  const initial = ((user && user.username) || '?').charAt(0).toUpperCase();
+  return `<span class="wa-avatar ${extraClass || ''}" style="background:${avatarColorFor(user && user.username)}">${escapeHtml(initial)}</span>`;
+}
+function setAvatarEl(el, user) {
+  if (user && user.avatar_url) {
+    el.innerHTML = `<img src="${escapeHtml(user.avatar_url)}" alt="">`;
+    el.style.background = 'transparent';
+  } else {
+    el.innerHTML = '';
+    el.textContent = ((user && user.username) || '?').charAt(0).toUpperCase();
+    el.style.background = avatarColorFor(user && user.username);
+  }
 }
 
 function renderChatBubble(m) {
@@ -1537,7 +1690,7 @@ function renderChatBubble(m) {
   if (m.attachment_url) {
     mediaHtml = m.attachment_type === 'video'
       ? `<video src="${escapeHtml(m.attachment_url)}" controls></video>`
-      : `<img src="${escapeHtml(m.attachment_url)}" alt="attachment" onclick="window.open('${escapeHtml(m.attachment_url)}','_blank')">`;
+      : `<img src="${escapeHtml(m.attachment_url)}" alt="attachment" onclick="openLightbox('${escapeHtml(m.attachment_url)}')">`;
   }
   const textHtml = m.content ? `<div class="wa-bubble-text">${escapeHtml(m.content)}</div>` : '';
   return `
@@ -1630,9 +1783,14 @@ $('#dmNewChatBtn').addEventListener('click', () => {
 async function loadConversations() {
   try {
     const convos = await api('/api/chat/conversations/');
+    // Keep state.users' avatar/bio data fresh from whichever source has it
+    convos.forEach(c => {
+      const idx = state.users.findIndex(u => u.id === c.user.id);
+      if (idx >= 0) state.users[idx] = { ...state.users[idx], ...c.user };
+    });
     $('#conversationsList').innerHTML = convos.map(c => `
-      <div class="wa-conv-item ${dmCurrentUserId === c.user.id ? 'active' : ''}" data-dmuser="${c.user.id}" data-dmname="${escapeHtml(c.user.username)}">
-        ${avatarHtml(c.user.username)}
+      <div class="wa-conv-item ${dmCurrentUserId === c.user.id ? 'active' : ''}" data-dmuser="${c.user.id}">
+        ${avatarHtml(c.user)}
         <div class="wa-conv-text">
           <div class="wa-conv-name">${escapeHtml(c.user.username)}</div>
           <div class="wa-conv-preview">${
@@ -1648,7 +1806,7 @@ async function loadConversations() {
       </div>
     `).join('') || '<div class="empty">No conversations yet — tap + New to start one.</div>';
     $$('#conversationsList [data-dmuser]').forEach(el => {
-      el.addEventListener('click', () => openDmThread(parseInt(el.dataset.dmuser), el.dataset.dmname));
+      el.addEventListener('click', () => openDmThread(parseInt(el.dataset.dmuser)));
     });
   } catch (err) {
     $('#conversationsList').innerHTML = `<div class="msg error">${escapeHtml(err.message)}</div>`;
@@ -1658,31 +1816,53 @@ async function loadConversations() {
 $('#dmStartBtn').addEventListener('click', () => {
   const picker = $('#dmUserPicker');
   if (!picker.value) return;
-  openDmThread(parseInt(picker.value), picker.options[picker.selectedIndex].text.replace(/\s*\(.*\)$/, ''));
+  openDmThread(parseInt(picker.value));
 });
 
-$('#waBackBtn').addEventListener('click', () => {
-  $('#waShell').classList.remove('show-thread');
+$('#waBackBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  $('#waShell').classList.remove('show-thread', 'show-profile');
   stopDmPolling();
   dmCurrentUserId = null;
 });
 
-function openDmThread(userId, username) {
+function openDmThread(userId) {
   dmCurrentUserId = userId;
-  $('#dmWithName').textContent = username;
-  const avatarEl = $('#dmAvatar');
-  avatarEl.textContent = (username || '?').charAt(0).toUpperCase();
-  avatarEl.style.background = avatarColorFor(username);
+  const user = state.users.find(u => u.id === userId) || { id: userId, username: '?', role: '' };
+
+  $('#dmWithName').textContent = user.username;
+  $('#dmWithRole').textContent = user.role || '';
+  setAvatarEl($('#dmAvatar'), user);
+
+  // Populate the contact-info panel too, since it may be shown immediately (wide screens)
+  setAvatarEl($('#waProfileAvatar'), user);
+  $('#waProfileName').textContent = user.username;
+  $('#waProfileRole').textContent = user.role || '';
+  $('#waProfileBio').textContent = user.bio || '';
+  $('#waProfileEmail').textContent = user.email || '—';
+
   $('#waThreadEmpty').classList.add('hidden');
   $('#waThreadActive').classList.remove('hidden');
   $('#waShell').classList.add('show-thread');
   $('#waNewChatPanel').classList.add('hidden');
+
+  // Auto-dock the profile panel on wide screens; on narrow screens it stays
+  // closed until the thread header is tapped (handled by the click listener below).
+  if (window.innerWidth > 1000) {
+    $('#waShell').classList.add('show-profile');
+  }
+
   loadDmThread();
   refreshBadges();
   loadConversations();
   stopDmPolling();
   dmPollHandle = setInterval(loadDmThread, 4000);
 }
+
+$('#waThreadHeaderClickable').addEventListener('click', (e) => {
+  if (e.target.closest('#waBackBtn')) return;
+  $('#waShell').classList.toggle('show-profile');
+});
 
 async function loadDmThread() {
   if (!dmCurrentUserId) return;
@@ -1727,6 +1907,88 @@ $('#dmForm').addEventListener('submit', async (e) => {
     loadConversations();
   } catch (err) {
     alert('Could not send message: ' + err.message);
+  }
+});
+
+/* ============================================================
+   THEME TOGGLE (light/dark)
+   ============================================================ */
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    $('#themeIconMoon').classList.add('hidden');
+    $('#themeIconSun').classList.remove('hidden');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    $('#themeIconMoon').classList.remove('hidden');
+    $('#themeIconSun').classList.add('hidden');
+  }
+}
+function initTheme() {
+  const saved = localStorage.getItem('tc_theme');
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(saved || (prefersDark ? 'dark' : 'light'));
+}
+$('#themeToggleBtn').addEventListener('click', () => {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const next = isDark ? 'light' : 'dark';
+  applyTheme(next);
+  localStorage.setItem('tc_theme', next);
+});
+initTheme();
+
+/* ============================================================
+   IMAGE LIGHTBOX
+   ============================================================ */
+function openLightbox(url) {
+  $('#imgLightboxImg').src = url;
+  $('#imgLightbox').classList.remove('hidden');
+}
+$('#imgLightbox').addEventListener('click', () => {
+  $('#imgLightbox').classList.add('hidden');
+  $('#imgLightboxImg').src = '';
+});
+$('#waProfileAvatar').addEventListener('click', () => {
+  const user = state.users.find(u => u.id === dmCurrentUserId);
+  if (user && user.avatar_url) openLightbox(user.avatar_url);
+});
+
+/* ============================================================
+   PROFILE FORM
+   ============================================================ */
+let profileAvatarFile = null;
+$('#profileAvatarInput').addEventListener('change', () => {
+  profileAvatarFile = $('#profileAvatarInput').files[0] || null;
+  if (profileAvatarFile) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      $('#profileAvatarPreview').innerHTML = `<img src="${reader.result}" alt="">`;
+      $('#profileAvatarPreview').style.background = 'transparent';
+    };
+    reader.readAsDataURL(profileAvatarFile);
+  }
+});
+
+$('#profileForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = $('#profileMsg');
+  msg.classList.add('hidden');
+  const fd = new FormData();
+  fd.append('first_name', $('#profileFirstName').value);
+  fd.append('last_name', $('#profileLastName').value);
+  fd.append('bio', $('#profileBio').value);
+  if (profileAvatarFile) fd.append('avatar', profileAvatarFile);
+  try {
+    const updated = await api('/api/auth/me/', { method: 'PATCH', body: fd, isForm: true });
+    state.user = { ...state.user, ...updated };
+    localStorage.setItem('tc_user', JSON.stringify(state.user));
+    const idx = state.users.findIndex(u => u.id === state.user.id);
+    if (idx >= 0) state.users[idx] = { ...state.users[idx], ...updated };
+    setAvatarEl($('#whoAvatar'), state.user);
+    profileAvatarFile = null;
+    showMsg(msg, 'Profile saved.', 'ok');
+  } catch (err) {
+    showMsg(msg, err.message || 'Could not save profile', 'error');
   }
 });
 
