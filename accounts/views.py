@@ -4,6 +4,7 @@ from django.core.mail import send_mail
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import generics, permissions, status
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -13,6 +14,7 @@ from .serializers import (
     CustomTokenObtainPairSerializer,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
+    ProfileUpdateSerializer,
     SignupSerializer,
     UserSerializer,
 )
@@ -42,18 +44,21 @@ class LoginView(TokenObtainPairView):
 
 
 class MeView(APIView):
-    """GET/PATCH /api/auth/me/ -- current authenticated user's profile."""
+    """GET/PATCH /api/auth/me/ -- current authenticated user's profile.
+    PATCH accepts multipart/form-data so an avatar image can be uploaded
+    alongside first_name/last_name/bio."""
 
     permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get(self, request):
-        return Response(UserSerializer(request.user).data)
+        return Response(UserSerializer(request.user, context={"request": request}).data)
 
     def patch(self, request):
-        serializer = UserSerializer(request.user, data=request.data, partial=True)
+        serializer = ProfileUpdateSerializer(request.user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data)
+        return Response(UserSerializer(request.user, context={"request": request}).data)
 
 
 class UserListView(generics.ListAPIView):

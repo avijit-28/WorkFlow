@@ -1,5 +1,16 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.db import models
+
+
+def _validate_avatar_size(value):
+    max_bytes = 5 * 1024 * 1024  # 5MB
+    if value.size > max_bytes:
+        raise ValidationError("Profile picture must be 5MB or smaller.")
+
+
+def avatar_upload_path(instance, filename):
+    return f"avatars/user_{instance.pk}/{filename}"
 
 
 class User(AbstractUser):
@@ -22,6 +33,10 @@ class User(AbstractUser):
 
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=10, choices=Role.choices, default=Role.MEMBER)
+    avatar = models.ImageField(
+        upload_to=avatar_upload_path, blank=True, null=True, validators=[_validate_avatar_size]
+    )
+    bio = models.CharField(max_length=160, blank=True)
 
     USERNAME_FIELD = "username"
     REQUIRED_FIELDS = ["email"]

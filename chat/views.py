@@ -153,6 +153,8 @@ class ConversationListView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
+        from accounts.serializers import UserSerializer
+
         user = request.user
         partner_ids = set(
             DirectMessage.objects.filter(sender=user).values_list("recipient_id", flat=True)
@@ -173,7 +175,7 @@ class ConversationListView(APIView):
                 continue
             results.append(
                 {
-                    "user": {"id": other.id, "username": other.username, "role": other.role},
+                    "user": UserSerializer(other, context={"request": request}).data,
                     "last_message": last.content,
                     "last_message_attachment_type": _attachment_type_for(last),
                     "last_message_at": last.created_at,

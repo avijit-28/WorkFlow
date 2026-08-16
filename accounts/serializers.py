@@ -8,10 +8,36 @@ User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
+    avatar_url = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ["id", "username", "email", "first_name", "last_name", "role", "date_joined"]
+        fields = [
+            "id", "username", "email", "first_name", "last_name",
+            "role", "bio", "avatar_url", "date_joined",
+        ]
         read_only_fields = ["id", "role", "date_joined"]
+
+    def get_avatar_url(self, obj):
+        if not obj.avatar:
+            return None
+        request = self.context.get("request")
+        url = obj.avatar.url
+        return request.build_absolute_uri(url) if request else url
+
+
+class ProfileUpdateSerializer(serializers.ModelSerializer):
+    """Used for PATCH /api/auth/me/ -- accepts multipart so an avatar can be uploaded
+    alongside the other fields. `avatar` here accepts uploads (write-only);
+    `avatar_url` on UserSerializer is what the frontend reads back."""
+
+    class Meta:
+        model = User
+        fields = ["first_name", "last_name", "bio", "avatar"]
+        extra_kwargs = {"avatar": {"write_only": True, "required": False}}
+
+    def validate_bio(self, value):
+        return (value or "").strip()[:160]
 
 
 class SignupSerializer(serializers.ModelSerializer):
@@ -114,5 +140,5 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
     def validate(self, attrs):
         data = super().validate(attrs)
-        data["user"] = UserSerializer(self.user).data
+        data["user"] = UserSerializer(self.user, context=self.context).data
         return data
