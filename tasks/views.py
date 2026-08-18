@@ -30,6 +30,42 @@ def _notify_assignment(actor, task):
         )
 
 
+def _notify_status_change(actor, task):
+    """
+    A task's status just changed. Tell the "other side":
+      - if the assignee themself moved it, notify the project's admin(s)
+      - if an admin (or anyone else) moved it, notify the assignee
+    """
+    message = f'{actor.username} moved "{task.title}" to {task.get_status_display()}'
+
+    if task.assigned_to_id == actor.id:
+        admin_ids = (
+            ProjectMembership.objects.filter(project=task.project, role=ProjectMembership.Role.ADMIN)
+            .exclude(user_id=actor.id)
+            .values_list("user_id", flat=True)
+        )
+        Notification.objects.bulk_create(
+            [
+                Notification(
+                    recipient_id=uid,
+                    verb=Notification.Verb.TASK_STATUS_CHANGED,
+                    message=message,
+                    project=task.project,
+                    task=task,
+                )
+                for uid in admin_ids
+            ]
+        )
+    elif task.assigned_to_id and task.assigned_to_id != actor.id:
+        Notification.objects.create(
+            recipient_id=task.assigned_to_id,
+            verb=Notification.Verb.TASK_STATUS_CHANGED,
+            message=message,
+            project=task.project,
+            task=task,
+        )
+
+
 class TaskViewSet(viewsets.ModelViewSet):
     """
     /api/tasks/?project=<id>&status=todo&assigned_to=<id>&overdue=true&mine=true
@@ -72,6 +108,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         instance = self.get_object()  # runs object-level permission check
         partial = kwargs.pop("partial", False)
         previous_assignee_id = instance.assigned_to_id
+        previous_status = instance.status
 
         if is_project_admin(request.user, instance.project) or request.user.is_superuser:
             serializer = TaskSerializer(instance, data=request.data, partial=partial, context={"request": request})
@@ -84,6 +121,8 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         if instance.assigned_to_id != previous_assignee_id:
             _notify_assignment(request.user, instance)
+        if instance.status != previous_status:
+            _notify_status_change(request.user, instance)
 
         return Response(TaskSerializer(instance, context={"request": request}).data)
 

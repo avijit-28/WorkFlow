@@ -6,24 +6,26 @@ from accounts.serializers import UserSerializer
 
 from .models import DirectMessage, ProjectMessage
 
-ALLOWED_ATTACHMENT_PREFIXES = ("image/", "video/")
-
 
 def _attachment_type(file_field):
+    """Used to decide how the frontend renders the attachment:
+    inline image, inline video player, or a generic file download chip."""
     if not file_field:
         return None
     guessed, _ = mimetypes.guess_type(file_field.name)
     if guessed and guessed.startswith("video/"):
         return "video"
-    return "image"
+    if guessed and guessed.startswith("image/"):
+        return "image"
+    return "file"
 
 
 def _validate_attachment_kind(value):
-    if not value:
-        return value
-    guessed, _ = mimetypes.guess_type(value.name)
-    if not guessed or not guessed.startswith(ALLOWED_ATTACHMENT_PREFIXES):
-        raise serializers.ValidationError("Only image or video attachments are allowed.")
+    # Any file type is allowed -- size is still capped (see models.py's
+    # _validate_chat_attachment_size, 25MB). We no longer restrict by
+    # MIME type since browsers/OSes don't always guess it reliably
+    # (e.g. HEIC photos, files with no/unusual extension), which was
+    # incorrectly rejecting legitimate uploads.
     return value
 
 

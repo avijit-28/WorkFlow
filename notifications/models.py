@@ -16,6 +16,7 @@ class Notification(models.Model):
         PROJECT_MESSAGE = "project_message", "New project chat message"
         DIRECT_MESSAGE = "direct_message", "New direct message"
         MEMBER_ADDED = "member_added", "Added to a project"
+        TASK_STATUS_CHANGED = "task_status_changed", "Task status changed"
 
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications"
