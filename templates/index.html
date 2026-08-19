@@ -250,7 +250,7 @@
   .tab:hover{color:var(--text);}
   .tab.active{color:var(--blue);border-color:var(--blue);}
 
-  .msg{font-size:12px;padding:9px 11px;border-radius:6px;margin-top:10px;font-family:var(--mono);}
+  .msg{font-size:12px;padding:9px 11px;border-radius:6px;margin-top:10px;font-family:var(--mono);white-space:pre-line;line-height:1.6;}
   .msg.error{background:var(--red-dim);color:var(--red);}
   .msg.ok{background:var(--teal-dim);color:var(--teal);}
   .empty{color:var(--muted);font-size:13px;padding:22px;text-align:center;border:1px dashed var(--line);border-radius:8px;}
@@ -1193,12 +1193,34 @@ async function api(path, { method = 'GET', body, auth = true, retry = true, isFo
   try { data = await res.json(); } catch (e) { /* no body */ }
 
   if (!res.ok) {
-    const err = new Error((data && (data.detail || JSON.stringify(data))) || `HTTP ${res.status}`);
+    const err = new Error(formatApiError(data) || `HTTP ${res.status}`);
     err.status = res.status;
     err.data = data;
     throw err;
   }
   return data;
+}
+
+// DRF validation errors look like {"email": ["Enter a valid email."], "password": [...]}
+// or {"detail": "..."} or plain arrays/strings. This turns any of those into
+// clean, human-readable lines with no field names, brackets, or quotes --
+// just the messages themselves, one per line.
+function flattenErrorValues(value) {
+  const lines = [];
+  if (Array.isArray(value)) {
+    value.forEach(v => lines.push(...flattenErrorValues(v)));
+  } else if (value && typeof value === 'object') {
+    Object.values(value).forEach(v => lines.push(...flattenErrorValues(v)));
+  } else if (value !== null && value !== undefined && value !== '') {
+    lines.push(String(value));
+  }
+  return lines;
+}
+function formatApiError(data) {
+  if (!data) return null;
+  if (typeof data === 'string') return data;
+  const lines = flattenErrorValues(data);
+  return [...new Set(lines)].join('\n') || null;
 }
 
 function forceLogout(message) {
