@@ -1,6 +1,9 @@
+import os
+
+import resend
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from django.core.mail import send_mail
+# from django.core.mail import send_mail
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import generics, permissions, status
@@ -21,6 +24,30 @@ from .serializers import (
 
 User = get_user_model()
 _reset_token_generator = PasswordResetTokenGenerator()
+
+resend.api_key = os.environ.get("RESEND_API_KEY", "")
+
+
+def send_reset_email(to_email, username, reset_link):
+    """Send the password reset email via Resend's HTTPS API.
+
+    Using an HTTPS API instead of raw SMTP avoids outbound SMTP ports
+    being blocked/throttled on some cloud hosts (e.g. Railway), which
+    previously caused this request to hang until Gunicorn killed the
+    worker with a WORKER TIMEOUT.
+    """
+    resend.Emails.send(
+        {
+            "from": os.environ.get("DEFAULT_FROM_EMAIL", "onboarding@resend.dev"),
+            "to": [to_email],
+            "subject": "Reset your Task Manager password",
+            "text": (
+                f"Hi {username},\n\n"
+                f"Click the link below to set a new password:\n{reset_link}\n\n"
+                "If you didn't request this, you can ignore this email."
+            ),
+        }
+    )
 
 
 class SignupView(generics.CreateAPIView):
@@ -87,9 +114,8 @@ class PasswordResetRequestView(APIView):
     POST /api/auth/password/reset/ -- body: {"email": "..."}
     Always responds with the same generic message whether or not the
     email exists, so this endpoint can't be used to enumerate accounts.
-    In dev, EMAIL_BACKEND defaults to the console backend, so the reset
-    link is printed to the server's terminal instead of actually
-    emailed -- see README for wiring up real SMTP in production.
+    Emails are sent via the Resend HTTPS API (see send_reset_email above)
+    -- set RESEND_API_KEY (and optionally DEFAULT_FROM_EMAIL) as env vars.
     """
 
     permission_classes = [permissions.AllowAny]
@@ -104,17 +130,10 @@ class PasswordResetRequestView(APIView):
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = _reset_token_generator.make_token(user)
             reset_link = f"{request.scheme}://{request.get_host()}/?reset_uid={uid}&reset_token={token}"
-            send_mail(
-                subject="Reset your Task Manager password",
-                message=(
-                    f"Hi {user.username},\n\n"
-                    f"Click the link below to set a new password:\n{reset_link}\n\n"
-                    "If you didn't request this, you can ignore this email."
-                ),
-                from_email=None,
-                recipient_list=[user.email],
-                fail_silently=True,
-            )
+            try:
+                send_reset_email(user.email, user.username, reset_link)
+            except Exception:
+                pass  # Never leak whether the email exists or sending failed
 
         return Response({"detail": "If that email is registered, a reset link has been sent."})
 
