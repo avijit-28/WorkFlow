@@ -143,8 +143,13 @@ class PasswordResetRequestView(APIView):
             reset_link = f"{request.scheme}://{request.get_host()}/?reset_uid={uid}&reset_token={token}"
             try:
                 send_reset_email(user.email, user.username, reset_link)
-            except Exception:
-                pass  # Never leak whether the email exists or sending failed
+            except Exception as e:
+                #pass  # Never leak whether the email exists or sending failed
+                # TEMPORARY: log the real error to Railway's deploy logs so we
+                # can diagnose the Brevo integration. Revert to silent
+                # `except Exception: pass` once email sending is confirmed
+                # working, to avoid leaking whether an email exists.
+                print(f"[password reset] send_reset_email failed: {e!r}")
 
         return Response({"detail": "If that email is registered, a reset link has been sent."})
 
