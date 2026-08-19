@@ -1,9 +1,8 @@
 import os
 
-import resend
+import requests
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
-# from django.core.mail import send_mail
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import generics, permissions, status
@@ -25,29 +24,41 @@ from .serializers import (
 User = get_user_model()
 _reset_token_generator = PasswordResetTokenGenerator()
 
-resend.api_key = os.environ.get("RESEND_API_KEY", "")
+BREVO_API_KEY = os.environ.get("BREVO_API_KEY", "")
+BREVO_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "")
+BREVO_FROM_NAME = os.environ.get("DEFAULT_FROM_NAME", "Task Manager")
 
 
 def send_reset_email(to_email, username, reset_link):
-    """Send the password reset email via Resend's HTTPS API.
+    """Send the password reset email via Brevo's HTTPS API.
 
     Using an HTTPS API instead of raw SMTP avoids outbound SMTP ports
     being blocked/throttled on some cloud hosts (e.g. Railway), which
     previously caused this request to hang until Gunicorn killed the
-    worker with a WORKER TIMEOUT.
+    worker with a WORKER TIMEOUT. Unlike Resend's test sender, Brevo's
+    free tier can send to any recipient without needing a verified
+    domain first.
     """
-    resend.Emails.send(
-        {
-            "from": os.environ.get("DEFAULT_FROM_EMAIL", "onboarding@resend.dev"),
-            "to": [to_email],
+    response = requests.post(
+        "https://api.brevo.com/v3/smtp/email",
+        headers={
+            "accept": "application/json",
+            "api-key": BREVO_API_KEY,
+            "content-type": "application/json",
+        },
+        json={
+            "sender": {"name": BREVO_FROM_NAME, "email": BREVO_FROM_EMAIL},
+            "to": [{"email": to_email}],
             "subject": "Reset your Task Manager password",
-            "text": (
+            "textContent": (
                 f"Hi {username},\n\n"
                 f"Click the link below to set a new password:\n{reset_link}\n\n"
                 "If you didn't request this, you can ignore this email."
             ),
-        }
+        },
+        timeout=10,
     )
+    response.raise_for_status()
 
 
 class SignupView(generics.CreateAPIView):
