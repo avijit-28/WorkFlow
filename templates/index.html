@@ -201,6 +201,9 @@
   /* ---------- cards / panels ---------- */
   .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px;overflow-y: auto;
     max-height: 250px;box-shadow:var(--shadow-sm);animation:fade-up .2s ease both;}
+  /* Forms that contain a search-select dropdown need room for the dropdown to
+     open without being clipped/scrolled by the card's own max-height. */
+  #createTaskCard, #addMemberCard{max-height:none;overflow:visible;}
   .grid{display:grid;gap:14px;}
   .grid.cols-3{grid-template-columns:repeat(3,1fr);}
   .grid.cols-2{grid-template-columns:repeat(2,1fr);}
