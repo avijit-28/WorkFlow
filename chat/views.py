@@ -56,7 +56,11 @@ class ProjectMessageListCreateView(generics.ListCreateAPIView):
         project_id = self.request.query_params.get("project")
         if not project_id:
             return ProjectMessage.objects.none()
-        return ProjectMessage.objects.filter(project_id=project_id).select_related("sender", "project")
+        return (
+            ProjectMessage.objects.filter(project_id=project_id)
+            .exclude(hidden_for=self.request.user)
+            .select_related("sender", "project")
+        )
 
     def list(self, request, *args, **kwargs):
         project_id = request.query_params.get("project")
@@ -104,6 +108,52 @@ class ProjectMessageListCreateView(generics.ListCreateAPIView):
         return is_project_admin(user, project) or user.is_superuser
 
 
+class ProjectMessageDetailView(generics.DestroyAPIView):
+    """
+    DELETE /api/chat/project-messages/<id>/
+    "Delete for everyone" -- only the original sender (or a superuser) may
+    do this. It permanently removes the message for every member.
+    """
+
+    queryset = ProjectMessage.objects.all()
+    serializer_class = ProjectMessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def destroy(self, request, *args, **kwargs):
+        message = self.get_object()
+        if message.sender_id != request.user.id and not request.user.is_superuser:
+            return Response(
+                {"detail": "You can only delete your own messages for everyone."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        message.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ProjectMessageHideView(APIView):
+    """
+    POST /api/chat/project-messages/hide/   body: {"ids": [1, 2, 3]}
+    "Delete for me" -- any project member can hide ANY message (their own
+    or someone else's) from their own chat view only. Everyone else still
+    sees it untouched. Group chat only, supports multiple ids at once.
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        ids = request.data.get("ids")
+        if not isinstance(ids, list) or not ids:
+            return Response({"detail": "ids (a non-empty list) is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        messages = ProjectMessage.objects.filter(id__in=ids).select_related("project")
+        hidden_ids = []
+        for message in messages:
+            if is_project_member(request.user, message.project) or request.user.is_superuser:
+                message.hidden_for.add(request.user)
+                hidden_ids.append(message.id)
+        return Response({"hidden_ids": hidden_ids})
+
+
 class DirectMessageListCreateView(generics.ListCreateAPIView):
     """
     /api/chat/direct-messages/?with=<user_id>
@@ -149,6 +199,28 @@ def _now():
     from django.utils import timezone
 
     return timezone.now()
+
+
+class DirectMessageDetailView(generics.DestroyAPIView):
+    """
+    DELETE /api/chat/direct-messages/<id>/
+    Only the original sender (or a superuser) can delete their own message
+    for everyone -- it disappears from both people's threads.
+    """
+
+    queryset = DirectMessage.objects.all()
+    serializer_class = DirectMessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def destroy(self, request, *args, **kwargs):
+        message = self.get_object()
+        if message.sender_id != request.user.id and not request.user.is_superuser:
+            return Response(
+                {"detail": "You can only delete your own messages."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        message.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 def _attachment_type_for(message):

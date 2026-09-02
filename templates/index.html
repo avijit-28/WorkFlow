@@ -425,7 +425,7 @@
 
   .wa-messages{flex:1;max-height:100%;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:6px;}
 
-  .wa-bubble-row{display:flex;animation:fade-up .15s ease both;}
+  .wa-bubble-row{display:flex;align-items:center;gap:4px;animation:fade-up .15s ease both;}
   .wa-bubble-row.out{justify-content:flex-end;}
   .wa-bubble{
     max-width:72%;padding:7px 9px 6px;border-radius:10px;font-size:13.5px;line-height:1.35;
@@ -433,6 +433,44 @@
   }
   .wa-bubble.in{background:var(--bubble-in-bg);color:var(--bubble-in-text);border-top-left-radius:2px;}
   .wa-bubble.out{background:var(--bubble-out-bg);color:var(--bubble-out-text);border-top-right-radius:2px;}
+
+  /* ---------- message-level actions: hover dots menu, multi-select ---------- */
+  .msg-dots-btn{
+    flex-shrink:0;width:22px;height:22px;border:none;background:none;border-radius:5px;
+    color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;
+    opacity:0;transition:opacity .1s ease, background .1s ease;font-size:15px;line-height:1;
+  }
+  .wa-bubble-row:hover .msg-dots-btn{opacity:1;}
+  .msg-dots-btn:hover{background:var(--panel-2);color:var(--text);}
+
+  .msg-action-menu{
+    position:absolute;z-index:60;background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    box-shadow:var(--shadow-lg);padding:4px;min-width:160px;display:flex;flex-direction:column;gap:1px;
+  }
+  .msg-action-menu button{
+    text-align:left;padding:8px 10px;border:none;background:none;border-radius:6px;font-size:13px;
+    color:var(--text);cursor:pointer;
+  }
+  .msg-action-menu button:hover{background:var(--panel-2);}
+  .msg-action-menu button.danger{color:var(--red);}
+  .msg-action-menu button.danger:hover{background:rgba(217,21,21,.1);}
+
+  .msg-select-check{flex-shrink:0;display:flex;align-items:center;cursor:pointer;}
+  .msg-select-check input{width:16px;height:16px;cursor:pointer;accent-color:var(--blue);}
+
+  .wa-select-toolbar{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 14px;
+    background:var(--panel-2);border-bottom:1px solid var(--line);flex-shrink:0;font-size:12.5px;
+  }
+  .wa-select-toolbar .count{font-weight:700;color:var(--text);}
+  .wa-select-toolbar-actions{display:flex;gap:8px;}
+  .wa-select-toolbar-actions button{
+    padding:6px 12px;border-radius:6px;border:1px solid var(--line);background:var(--panel);
+    color:var(--text);font-size:12px;font-weight:600;cursor:pointer;
+  }
+  .wa-select-toolbar-actions button.danger{background:var(--red);border-color:var(--red);color:#fff;}
+  .wa-select-toolbar-actions button:disabled{opacity:.5;cursor:not-allowed;}
+  .wa-select-toolbar-actions button.link{background:none;border:none;color:var(--blue);}
   .wa-bubble-text{white-space:pre-wrap;word-break:break-word;}
   .wa-bubble-text .chat-link{color:inherit;text-decoration:underline;text-underline-offset:2px;word-break:break-all;}
   .wa-bubble-text .chat-link:hover{opacity:.85;}
@@ -449,12 +487,21 @@
   .wa-input-bar{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--input-bar-bg);border-top:1px solid var(--line);flex-shrink:0;}
   .wa-input-bar input[type=text]{flex:1;border-radius:20px;background:var(--input-field-bg);min-height:40px;border:1px solid var(--line);}
 
+  .wa-chat-toolbar{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 14px;
+    background:var(--panel-2);border-bottom:1px solid var(--line);flex-shrink:0;flex-wrap:wrap;
+  }
   .wa-admin-only-toggle{
     display:flex;align-items:center;gap:8px;padding:9px 14px;font-size:12.5px;color:var(--muted);
     background:var(--panel-2);border-bottom:1px solid var(--line);flex-shrink:0;cursor:pointer;user-select:none;
   }
   .wa-admin-only-toggle input{cursor:pointer;width:15px;height:15px;accent-color:var(--blue);}
   .wa-admin-only-toggle span{font-weight:600;}
+  .wa-select-toggle-btn{
+    margin-left:auto;padding:6px 12px;border-radius:6px;border:1px solid var(--line);background:var(--panel);
+    color:var(--text);font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;
+  }
+  .wa-select-toggle-btn:hover{background:var(--panel-2);}
   .wa-locked-banner{
     padding:9px 14px;font-size:12.5px;font-weight:600;color:var(--muted);text-align:center;
     background:var(--panel-2);border-top:1px solid var(--line);flex-shrink:0;
@@ -705,6 +752,9 @@
 <div class="modal-overlay hidden" id="imgLightbox">
   <img id="imgLightboxImg" src="" alt="">
 </div>
+
+<!-- Floating per-message action menu (Delete for me / Delete for everyone) -->
+<div class="msg-action-menu hidden" id="msgActionMenu"></div>
 
 <!-- CONTACT PROFILE MODAL (mobile / narrow screens -- opened by tapping the chat header) -->
 <div class="modal-overlay hidden" id="profileInfoModal">
@@ -971,10 +1021,20 @@
       <div id="pd-chat" class="hidden">
         <div class="wa-thread wa-thread-embedded">
           <div class="wa-thread-active">
-            <label class="wa-admin-only-toggle hidden" id="chatAdminOnlyRow">
-              <input type="checkbox" id="chatAdminOnlyToggle">
-              <span>Only admins can send messages in this group</span>
-            </label>
+            <div class="wa-chat-toolbar" id="chatToolbarRow">
+              <label class="wa-admin-only-toggle hidden" id="chatAdminOnlyRow" style="border:none;padding:9px 0;background:none;">
+                <input type="checkbox" id="chatAdminOnlyToggle">
+                <span>Only admins can send messages</span>
+              </label>
+              <button type="button" class="wa-select-toggle-btn" id="chatSelectModeBtn">Select messages</button>
+            </div>
+            <div class="wa-select-toolbar hidden" id="chatSelectToolbar">
+              <span><span class="count" id="chatSelectCount">0</span> selected</span>
+              <div class="wa-select-toolbar-actions">
+                <button type="button" class="link" id="chatSelectCancelBtn">Cancel</button>
+                <button type="button" class="danger" id="chatSelectDeleteBtn" disabled>Delete for me</button>
+              </div>
+            </div>
             <div class="wa-messages" id="projectChatList"></div>
             <div class="wa-locked-banner hidden" id="chatLockedBanner">
               🔒 Only project admins can send messages in this group right now.
@@ -1810,9 +1870,16 @@ function switchPdTab(which) {
   $('#pd-chat').classList.toggle('hidden', which !== 'chat');
   $('#pd-members').classList.toggle('hidden', which !== 'members');
 
+  if (which !== 'chat') exitGroupSelectMode();
   stopProjectChatPolling();
   if (which === 'submission') loadSubmissions();
   if (which === 'chat') { updateChatComposerLock(); loadProjectChat(); startProjectChatPolling(); }
+}
+function exitGroupSelectMode() {
+  groupSelectMode = false;
+  groupSelectedIds = new Set();
+  $('#chatSelectToolbar').classList.add('hidden');
+  $('#chatSelectModeBtn').classList.remove('hidden');
 }
 
 /* ---------- Admin-only group chat toggle ---------- */
@@ -2163,6 +2230,8 @@ $('#submissionForm').addEventListener('submit', async (e) => {
    ============================================================ */
 let projectChatPollHandle = null;
 let projectChatAttachedFile = null;
+let groupSelectMode = false;
+let groupSelectedIds = new Set();
 
 function startProjectChatPolling() {
   stopProjectChatPolling();
@@ -2180,7 +2249,7 @@ async function loadProjectChat() {
     const messages = data.results || data;
     const list = $('#projectChatList');
     const wasAtBottom = list.scrollTop + list.clientHeight >= list.scrollHeight - 20;
-    list.innerHTML = messages.map(m => renderChatBubble(m)).join('');
+    list.innerHTML = messages.map(m => renderChatBubble(m, 'group')).join('');
     if (wasAtBottom) list.scrollTop = list.scrollHeight;
   } catch (err) {
     $('#projectChatList').innerHTML = `<div class="msg error">${escapeHtml(err.message)}</div>`;
@@ -2212,7 +2281,7 @@ function setAvatarEl(el, user) {
   }
 }
 
-function renderChatBubble(m) {
+function renderChatBubble(m, context) {
   const mine = m.sender.id === state.user.id;
   const time = new Date(m.created_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   let mediaHtml = '';
@@ -2235,17 +2304,148 @@ function renderChatBubble(m) {
     }
   }
   const textHtml = m.content ? `<div class="wa-bubble-text">${linkifyText(escapeHtml(m.content))}</div>` : '';
+
+  // Message-level controls:
+  // - Group chat: any message (mine or not) can be "deleted for me"; only my
+  //   own messages can also be "deleted for everyone". A dots menu offers
+  //   whichever apply. In multi-select mode, a checkbox replaces the dots.
+  // - DMs: only my own messages get a dots menu, offering "delete for
+  //   everyone" only (no per-message "delete for me", no multi-select).
+  const isGroup = context === 'group';
+  let controlHtml = '';
+  if (isGroup && groupSelectMode) {
+    const checked = groupSelectedIds.has(m.id) ? 'checked' : '';
+    controlHtml = `<label class="msg-select-check"><input type="checkbox" class="msg-select-checkbox" data-mid="${m.id}" ${checked}></label>`;
+  } else if (isGroup || mine) {
+    controlHtml = `<button type="button" class="msg-dots-btn" data-mid="${m.id}" data-mine="${mine ? '1' : '0'}" title="Message options">⋮</button>`;
+  }
+  const dotsBefore = mine ? controlHtml : '';
+  const dotsAfter = mine ? '' : controlHtml;
+
   return `
-    <div class="wa-bubble-row ${mine ? 'out' : 'in'}">
+    <div class="wa-bubble-row ${mine ? 'out' : 'in'}" data-mid="${m.id}">
+      ${dotsBefore}
       <div class="wa-bubble ${mine ? 'out' : 'in'}">
         ${!mine ? `<div class="wa-bubble-time" style="text-align:left;font-weight:700;color:${avatarColorFor(m.sender.username)}">${escapeHtml(m.sender.username)}</div>` : ''}
         ${mediaHtml}
         ${textHtml}
         <div class="wa-bubble-time">${time}</div>
       </div>
+      ${dotsAfter}
     </div>
   `;
 }
+
+/* ---------- message actions: delete-for-me, delete-for-everyone, multi-select ---------- */
+let msgActionMenuTarget = null; // { id, context, mine }
+
+function openMsgActionMenu(btn, mid, context, mine) {
+  const menu = $('#msgActionMenu');
+  const canDeleteForMe = context === 'group';
+  const canDeleteForEveryone = mine;
+  let html = '';
+  if (canDeleteForMe) html += `<button type="button" data-action="delete-me">Delete for me</button>`;
+  if (canDeleteForEveryone) html += `<button type="button" data-action="delete-everyone" class="danger">Delete for everyone</button>`;
+  if (!html) { closeMsgActionMenu(); return; }
+  menu.innerHTML = html;
+  msgActionMenuTarget = { id: mid, context, mine };
+
+  const rect = btn.getBoundingClientRect();
+  menu.classList.remove('hidden');
+  const menuWidth = menu.offsetWidth || 170;
+  let left = rect.right + window.scrollX - menuWidth;
+  left = Math.max(8, Math.min(left, window.scrollX + document.documentElement.clientWidth - menuWidth - 8));
+  menu.style.top = `${rect.bottom + window.scrollY + 4}px`;
+  menu.style.left = `${left}px`;
+}
+function closeMsgActionMenu() {
+  $('#msgActionMenu').classList.add('hidden');
+  msgActionMenuTarget = null;
+}
+document.addEventListener('click', (e) => {
+  if (e.target.closest('#msgActionMenu') || e.target.closest('.msg-dots-btn')) return;
+  closeMsgActionMenu();
+});
+$('#msgActionMenu').addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-action]');
+  if (!btn || !msgActionMenuTarget) return;
+  const { id, context } = msgActionMenuTarget;
+  const action = btn.dataset.action;
+  closeMsgActionMenu();
+  if (action === 'delete-me') {
+    await hideMessagesForMe([id]);
+  } else if (action === 'delete-everyone') {
+    if (!confirm('Delete this message for everyone? This cannot be undone.')) return;
+    await deleteMessageForEveryone(id, context);
+  }
+});
+
+async function hideMessagesForMe(ids) {
+  if (!ids.length) return;
+  try {
+    await api('/api/chat/project-messages/hide/', { method: 'POST', body: { ids } });
+    loadProjectChat();
+  } catch (err) {
+    alert('Could not delete message(s): ' + err.message);
+  }
+}
+
+async function deleteMessageForEveryone(id, context) {
+  const endpoint = context === 'group' ? `/api/chat/project-messages/${id}/` : `/api/chat/direct-messages/${id}/`;
+  try {
+    await api(endpoint, { method: 'DELETE' });
+    if (context === 'group') loadProjectChat(); else loadDmThread();
+  } catch (err) {
+    alert('Could not delete message: ' + err.message);
+  }
+}
+
+// Event delegation: dots buttons + select-mode checkboxes for both message lists.
+function wireMessageListDelegation(listSelector, context) {
+  $(listSelector).addEventListener('click', (e) => {
+    const dots = e.target.closest('.msg-dots-btn');
+    if (dots) {
+      const mid = parseInt(dots.dataset.mid);
+      const mine = dots.dataset.mine === '1';
+      openMsgActionMenu(dots, mid, context, mine);
+      return;
+    }
+    const check = e.target.closest('.msg-select-checkbox');
+    if (check) {
+      const mid = parseInt(check.dataset.mid);
+      if (check.checked) groupSelectedIds.add(mid); else groupSelectedIds.delete(mid);
+      updateSelectToolbarCount();
+    }
+  });
+}
+wireMessageListDelegation('#projectChatList', 'group');
+wireMessageListDelegation('#dmMessageList', 'dm');
+
+function updateSelectToolbarCount() {
+  const n = groupSelectedIds.size;
+  $('#chatSelectCount').textContent = n;
+  $('#chatSelectDeleteBtn').disabled = n === 0;
+}
+
+$('#chatSelectModeBtn').addEventListener('click', () => {
+  groupSelectMode = true;
+  groupSelectedIds = new Set();
+  $('#chatSelectToolbar').classList.remove('hidden');
+  $('#chatSelectModeBtn').classList.add('hidden');
+  updateSelectToolbarCount();
+  loadProjectChat();
+});
+$('#chatSelectCancelBtn').addEventListener('click', () => {
+  exitGroupSelectMode();
+  loadProjectChat();
+});
+$('#chatSelectDeleteBtn').addEventListener('click', async () => {
+  const ids = Array.from(groupSelectedIds);
+  if (!ids.length) return;
+  if (!confirm(`Delete ${ids.length} message${ids.length > 1 ? 's' : ''} for you? Other members will still see them.`)) return;
+  await hideMessagesForMe(ids);
+  exitGroupSelectMode();
+});
 
 function wireAttachButton(btnId, inputId, previewId, nameId, clearId, onChange) {
   $(btnId).addEventListener('click', () => $(inputId).click());
@@ -2442,7 +2642,7 @@ async function loadDmThread() {
     const messages = data.results || data;
     const list = $('#dmMessageList');
     const wasAtBottom = list.scrollTop + list.clientHeight >= list.scrollHeight - 20;
-    list.innerHTML = messages.map(m => renderChatBubble(m)).join('');
+    list.innerHTML = messages.map(m => renderChatBubble(m, 'dm')).join('');
     if (wasAtBottom) list.scrollTop = list.scrollHeight;
   } catch (err) {
     $('#dmMessageList').innerHTML = `<div class="msg error">${escapeHtml(err.message)}</div>`;

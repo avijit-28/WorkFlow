@@ -28,6 +28,11 @@ class ProjectMessage(models.Model):
     attachment = models.FileField(
         upload_to=project_attachment_upload_path, blank=True, null=True, validators=[_validate_chat_attachment_size]
     )
+    # "Delete for me": any member can hide any message (their own or someone
+    # else's) from their own view without affecting anyone else's chat.
+    hidden_for = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, blank=True, related_name="hidden_project_messages"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
