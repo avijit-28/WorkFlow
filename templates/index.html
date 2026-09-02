@@ -2309,14 +2309,14 @@ function renderChatBubble(m, context) {
   // - Group chat: any message (mine or not) can be "deleted for me"; only my
   //   own messages can also be "deleted for everyone". A dots menu offers
   //   whichever apply. In multi-select mode, a checkbox replaces the dots.
-  // - DMs: only my own messages get a dots menu, offering "delete for
-  //   everyone" only (no per-message "delete for me", no multi-select).
+  // - DMs: any message (mine or the other person's) can be "deleted for
+  //   me"; only my own messages can also be "deleted for everyone".
   const isGroup = context === 'group';
   let controlHtml = '';
   if (isGroup && groupSelectMode) {
     const checked = groupSelectedIds.has(m.id) ? 'checked' : '';
     controlHtml = `<label class="msg-select-check"><input type="checkbox" class="msg-select-checkbox" data-mid="${m.id}" ${checked}></label>`;
-  } else if (isGroup || mine) {
+  } else {
     controlHtml = `<button type="button" class="msg-dots-btn" data-mid="${m.id}" data-mine="${mine ? '1' : '0'}" title="Message options">⋮</button>`;
   }
   const dotsBefore = mine ? controlHtml : '';
@@ -2341,7 +2341,7 @@ let msgActionMenuTarget = null; // { id, context, mine }
 
 function openMsgActionMenu(btn, mid, context, mine) {
   const menu = $('#msgActionMenu');
-  const canDeleteForMe = context === 'group';
+  const canDeleteForMe = true; // any message, in either chat, can be hidden from just me
   const canDeleteForEveryone = mine;
   let html = '';
   if (canDeleteForMe) html += `<button type="button" data-action="delete-me">Delete for me</button>`;
@@ -2373,18 +2373,19 @@ $('#msgActionMenu').addEventListener('click', async (e) => {
   const action = btn.dataset.action;
   closeMsgActionMenu();
   if (action === 'delete-me') {
-    await hideMessagesForMe([id]);
+    await hideMessagesForMe([id], context);
   } else if (action === 'delete-everyone') {
     if (!confirm('Delete this message for everyone? This cannot be undone.')) return;
     await deleteMessageForEveryone(id, context);
   }
 });
 
-async function hideMessagesForMe(ids) {
+async function hideMessagesForMe(ids, context) {
   if (!ids.length) return;
+  const endpoint = context === 'dm' ? '/api/chat/direct-messages/hide/' : '/api/chat/project-messages/hide/';
   try {
-    await api('/api/chat/project-messages/hide/', { method: 'POST', body: { ids } });
-    loadProjectChat();
+    await api(endpoint, { method: 'POST', body: { ids } });
+    if (context === 'dm') loadDmThread(); else loadProjectChat();
   } catch (err) {
     alert('Could not delete message(s): ' + err.message);
   }
@@ -2443,7 +2444,7 @@ $('#chatSelectDeleteBtn').addEventListener('click', async () => {
   const ids = Array.from(groupSelectedIds);
   if (!ids.length) return;
   if (!confirm(`Delete ${ids.length} message${ids.length > 1 ? 's' : ''} for you? Other members will still see them.`)) return;
-  await hideMessagesForMe(ids);
+  await hideMessagesForMe(ids, 'group');
   exitGroupSelectMode();
 });
 

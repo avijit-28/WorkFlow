@@ -58,6 +58,12 @@ class DirectMessage(models.Model):
     attachment = models.FileField(
         upload_to=direct_attachment_upload_path, blank=True, null=True, validators=[_validate_chat_attachment_size]
     )
+    # "Delete for me": either side of the DM can hide any message (their own
+    # or the other person's) from their own view only -- the other person's
+    # thread is completely unaffected.
+    hidden_for = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, blank=True, related_name="hidden_direct_messages"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     read_at = models.DateTimeField(null=True, blank=True)
 

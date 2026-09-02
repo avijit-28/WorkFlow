@@ -172,7 +172,7 @@ class DirectMessageListCreateView(generics.ListCreateAPIView):
             return DirectMessage.objects.none()
         qs = DirectMessage.objects.filter(
             Q(sender=user, recipient_id=other_id) | Q(sender_id=other_id, recipient=user)
-        ).select_related("sender", "recipient")
+        ).exclude(hidden_for=user).select_related("sender", "recipient")
         # mark incoming messages as read as they're viewed
         DirectMessage.objects.filter(sender_id=other_id, recipient=user, read_at__isnull=True).update(
             read_at=_now()
@@ -221,6 +221,30 @@ class DirectMessageDetailView(generics.DestroyAPIView):
             )
         message.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class DirectMessageHideView(APIView):
+    """
+    POST /api/chat/direct-messages/hide/   body: {"ids": [1, 2, 3]}
+    "Delete for me" -- either side of a DM thread can hide ANY message
+    (their own or the other person's) from their own view only. The other
+    person's thread is completely unaffected.
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        ids = request.data.get("ids")
+        if not isinstance(ids, list) or not ids:
+            return Response({"detail": "ids (a non-empty list) is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+        messages = DirectMessage.objects.filter(id__in=ids).filter(Q(sender=user) | Q(recipient=user))
+        hidden_ids = []
+        for message in messages:
+            message.hidden_for.add(user)
+            hidden_ids.append(message.id)
+        return Response({"hidden_ids": hidden_ids})
 
 
 def _attachment_type_for(message):
