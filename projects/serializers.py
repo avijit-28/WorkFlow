@@ -36,6 +36,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             "member_count",
             "task_count",
             "my_role",
+            "admin_only_chat",
             "created_at",
             "updated_at",
         ]

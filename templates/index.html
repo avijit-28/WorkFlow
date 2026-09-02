@@ -204,6 +204,14 @@
   /* Forms that contain a search-select dropdown need room for the dropdown to
      open without being clipped/scrolled by the card's own max-height. */
   #createTaskCard, #addMemberCard{max-height:none;overflow:visible;}
+
+  /* ---------- fixed-size projects box (search + list, list scrolls internally) ---------- */
+  .projects-box{
+    display:flex;flex-direction:column;height:520px;max-height:520px;overflow:hidden;
+  }
+  .projects-box .project-search{flex-shrink:0;max-width:none;margin-top:0;}
+  .projects-box #projectsList{flex:1;min-height:0;overflow-y:auto;margin-top:14px;padding-right:2px;}
+  @media (max-width: 640px){ .projects-box{height:440px;max-height:440px;} }
   .grid{display:grid;gap:14px;}
   .grid.cols-3{grid-template-columns:repeat(3,1fr);}
   .grid.cols-2{grid-template-columns:repeat(2,1fr);}
@@ -227,6 +235,15 @@
   .row-card .title{font-weight:700;font-size:14px;color:var(--text);word-break:break-word;}
   .row-card .meta{color:var(--muted);font-size:12px;margin-top:2px;font-family:var(--mono);}
   .row-card-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto;}
+
+  .icon-btn{
+    display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;flex-shrink:0;
+    border-radius:7px;border:1px solid var(--line);background:var(--panel-2);color:var(--muted);
+    cursor:pointer;transition:background .12s ease, color .12s ease, border-color .12s ease;
+  }
+  .icon-btn svg{width:16px;height:16px;}
+  .icon-btn:hover{background:var(--panel);color:var(--text);}
+  .icon-btn.danger:hover{background:rgba(217,21,21,.1);color:var(--red);border-color:var(--red);}
 
   .status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
   .status-dot.todo{background:var(--muted);}
@@ -431,6 +448,17 @@
 
   .wa-input-bar{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--input-bar-bg);border-top:1px solid var(--line);flex-shrink:0;}
   .wa-input-bar input[type=text]{flex:1;border-radius:20px;background:var(--input-field-bg);min-height:40px;border:1px solid var(--line);}
+
+  .wa-admin-only-toggle{
+    display:flex;align-items:center;gap:8px;padding:9px 14px;font-size:12.5px;color:var(--muted);
+    background:var(--panel-2);border-bottom:1px solid var(--line);flex-shrink:0;cursor:pointer;user-select:none;
+  }
+  .wa-admin-only-toggle input{cursor:pointer;width:15px;height:15px;accent-color:var(--blue);}
+  .wa-admin-only-toggle span{font-weight:600;}
+  .wa-locked-banner{
+    padding:9px 14px;font-size:12.5px;font-weight:600;color:var(--muted);text-align:center;
+    background:var(--panel-2);border-top:1px solid var(--line);flex-shrink:0;
+  }
   .wa-attach-btn, .wa-send-btn{
     width:38px;height:38px;border-radius:50%;border:none;background:transparent;color:var(--attach-icon-color);
     display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0;
@@ -858,12 +886,14 @@
         <div class="msg hidden" id="createProjectMsg"></div>
       </div>
 
-      <div class="project-search">
-        <svg class="ss-icon" viewBox="0 0 20 20" fill="none"><circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="M17 17l-3.7-3.7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        <input type="text" id="projectSearchInput" placeholder="Search projects…" autocomplete="off">
-      </div>
+      <div class="card projects-box" id="projectsBox">
+        <div class="project-search">
+          <svg class="ss-icon" viewBox="0 0 20 20" fill="none"><circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="M17 17l-3.7-3.7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <input type="text" id="projectSearchInput" placeholder="Search projects…" autocomplete="off">
+        </div>
 
-      <div class="list" id="projectsList" style="margin-top:14px"></div>
+        <div class="list" id="projectsList" style="margin-top:14px"></div>
+      </div>
     </div>
 
     <!-- PROJECT DETAIL VIEW -->
@@ -941,7 +971,14 @@
       <div id="pd-chat" class="hidden">
         <div class="wa-thread wa-thread-embedded">
           <div class="wa-thread-active">
+            <label class="wa-admin-only-toggle hidden" id="chatAdminOnlyRow">
+              <input type="checkbox" id="chatAdminOnlyToggle">
+              <span>Only admins can send messages in this group</span>
+            </label>
             <div class="wa-messages" id="projectChatList"></div>
+            <div class="wa-locked-banner hidden" id="chatLockedBanner">
+              🔒 Only project admins can send messages in this group right now.
+            </div>
             <form id="projectChatForm" class="wa-input-bar">
               <input type="file" id="projectChatAttachInput" class="hidden">
               <button type="button" class="wa-attach-btn" id="projectChatAttachBtn" title="Attach a file">
@@ -1417,6 +1454,12 @@ async function enterApp() {
 function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+/* A project admin OR a global admin (state.user.role === 'admin') gets
+   admin-level controls, mirroring the backend's is_project_admin(). */
+function isCurrentUserProjectAdmin() {
+  if (!state.currentProject) return false;
+  return state.currentProject.my_role === 'admin' || state.user.role === 'admin';
+}
 /* Turns plain-text URLs inside already-escaped text into clickable links
    that open in a new tab. Must be called AFTER escapeHtml() so we never
    inject unescaped user content as markup. */
@@ -1670,13 +1713,19 @@ function renderProjectsList(filterText) {
   const projects = !q ? state.projects : state.projects.filter(p =>
     p.name.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q)
   );
+  const globalAdmin = state.user.role === 'admin';
 
   $('#projectsList').innerHTML = projects.map(p => `
     <div class="row-card" data-projid="${p.id}">
       <div class="main-txt">
         <div class="title">${escapeHtml(p.name)}</div>
-        <div class="meta">${p.member_count} members · ${p.task_count} tasks · you: ${p.my_role}</div>
+        <div class="meta">${p.member_count} members · ${p.task_count} tasks · you: ${p.my_role || (globalAdmin ? 'admin (org-wide)' : '—')}</div>
       </div>
+      ${globalAdmin ? `
+        <button type="button" class="icon-btn danger" data-delproj="${p.id}" title="Delete project" onclick="event.stopPropagation()">
+          <svg viewBox="0 0 20 20" fill="none"><path d="M4 6h12M8 6V4.5A1.5 1.5 0 0 1 9.5 3h1A1.5 1.5 0 0 1 12 4.5V6m-6.5 0 .6 9.4A1.5 1.5 0 0 0 7.6 17h4.8a1.5 1.5 0 0 0 1.5-1.6L14.5 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      ` : ''}
     </div>
   `).join('') || (
     q ? `<div class="empty">No projects match "${escapeHtml(filterText.trim())}".</div>`
@@ -1684,6 +1733,21 @@ function renderProjectsList(filterText) {
   );
   $$('#projectsList [data-projid]').forEach(el => {
     el.addEventListener('click', () => openProject(parseInt(el.dataset.projid)));
+  });
+  $$('#projectsList [data-delproj]').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const id = parseInt(btn.dataset.delproj);
+      const proj = state.projects.find(pr => pr.id === id);
+      if (!confirm(`Delete "${proj ? proj.name : 'this project'}"? This removes all its tasks, chat, and submissions permanently.`)) return;
+      try {
+        await api(`/api/projects/${id}/`, { method: 'DELETE' });
+        state.projects = state.projects.filter(pr => pr.id !== id);
+        renderProjectsList($('#projectSearchInput').value);
+      } catch (err) {
+        alert('Could not delete project: ' + err.message);
+      }
+    });
   });
 }
 
@@ -1720,7 +1784,7 @@ async function openProject(id) {
     state.currentProject = p;
     $('#pdName').textContent = p.name;
     $('#pdDesc').textContent = p.description || 'No description';
-    const isAdmin = p.my_role === 'admin';
+    const isAdmin = isCurrentUserProjectAdmin();
     $('#createTaskCard').classList.toggle('hidden', !isAdmin);
     $('#addMemberCard').classList.toggle('hidden', !isAdmin);
     populateAssigneeSelect(p.memberships || []);
@@ -1728,6 +1792,7 @@ async function openProject(id) {
     switchPdTab('tasks');
     loadTasks(id);
     renderMembers(p.memberships || []);
+    updateChatComposerLock();
   } catch (err) {
     alert('Could not open project: ' + err.message);
   }
@@ -1747,8 +1812,47 @@ function switchPdTab(which) {
 
   stopProjectChatPolling();
   if (which === 'submission') loadSubmissions();
-  if (which === 'chat') { loadProjectChat(); startProjectChatPolling(); }
+  if (which === 'chat') { updateChatComposerLock(); loadProjectChat(); startProjectChatPolling(); }
 }
+
+/* ---------- Admin-only group chat toggle ---------- */
+function updateChatComposerLock() {
+  const project = state.currentProject;
+  if (!project) return;
+  const isAdmin = isCurrentUserProjectAdmin();
+  const restricted = !!project.admin_only_chat;
+
+  // Toggle row: only admins can see/flip the switch.
+  const toggleRow = $('#chatAdminOnlyRow');
+  toggleRow.classList.toggle('hidden', !isAdmin);
+  $('#chatAdminOnlyToggle').checked = restricted;
+
+  // Composer: locked for non-admins when the restriction is on.
+  const locked = restricted && !isAdmin;
+  $('#chatLockedBanner').classList.toggle('hidden', !locked);
+  $('#projectChatForm').classList.toggle('hidden', locked);
+  if (locked) $('#projectChatAttachPreview').classList.add('hidden');
+}
+
+$('#chatAdminOnlyToggle').addEventListener('change', async (e) => {
+  const project = state.currentProject;
+  if (!project) return;
+  const desired = e.target.checked;
+  e.target.disabled = true;
+  try {
+    const updated = await api(`/api/projects/${project.id}/`, {
+      method: 'PATCH',
+      body: { admin_only_chat: desired },
+    });
+    state.currentProject.admin_only_chat = updated.admin_only_chat;
+  } catch (err) {
+    e.target.checked = !desired; // revert on failure
+    alert('Could not update chat setting: ' + err.message);
+  } finally {
+    e.target.disabled = false;
+    updateChatComposerLock();
+  }
+});
 
 function populateAssigneeSelect(memberships) {
   const ss = createSearchSelect('ntAssignee', {
@@ -1804,7 +1908,7 @@ $$('[data-taskview]').forEach(tab => {
 
 function renderTasksList(projectId) {
   const tasks = state_lastLoadedTasks;
-  const isAdmin = state.currentProject.my_role === 'admin';
+  const isAdmin = isCurrentUserProjectAdmin();
   $('#tasksList').innerHTML = tasks.map(t => `
     <div class="row-card ${t.is_overdue ? 'overdue' : ''}" style="cursor:default">
       <span class="status-dot ${t.status}"></span>
@@ -1855,7 +1959,7 @@ const BOARD_COLUMNS = [
 
 function renderTasksBoard(projectId) {
   const tasks = state_lastLoadedTasks;
-  const isAdmin = state.currentProject.my_role === 'admin';
+  const isAdmin = isCurrentUserProjectAdmin();
 
   $('#tasksBoard').innerHTML = BOARD_COLUMNS.map(col => {
     const colTasks = tasks.filter(t => t.status === col.status);

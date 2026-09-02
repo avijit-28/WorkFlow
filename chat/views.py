@@ -4,7 +4,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from projects.permissions import is_project_member
+from projects.permissions import is_project_admin, is_project_member
 from notifications.models import Notification
 
 from .models import DirectMessage, ProjectMessage
@@ -72,6 +72,11 @@ class ProjectMessageListCreateView(generics.ListCreateAPIView):
             return Response({"detail": "project is required."}, status=status.HTTP_400_BAD_REQUEST)
         if not self._is_member(request.user, project_id):
             return Response({"detail": "You are not a member of this project."}, status=status.HTTP_403_FORBIDDEN)
+        if not self._can_post(request.user, project_id):
+            return Response(
+                {"detail": "Only project admins can send messages in this group chat."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         message = serializer.save(sender=request.user, project_id=project_id)
@@ -86,6 +91,17 @@ class ProjectMessageListCreateView(generics.ListCreateAPIView):
         if not project:
             return False
         return is_project_member(user, project) or user.is_superuser
+
+    @staticmethod
+    def _can_post(user, project_id):
+        from projects.models import Project
+
+        project = Project.objects.filter(id=project_id).first()
+        if not project:
+            return False
+        if not project.admin_only_chat:
+            return True
+        return is_project_admin(user, project) or user.is_superuser
 
 
 class DirectMessageListCreateView(generics.ListCreateAPIView):

@@ -24,7 +24,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_superuser:
+        if user.is_superuser or user.is_global_admin:
             return Project.objects.all()
         return Project.objects.filter(memberships__user=user).distinct()
 

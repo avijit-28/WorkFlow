@@ -10,14 +10,14 @@ def get_membership(user, project):
 
 
 def is_project_admin(user, project):
-    if user.is_superuser:
+    if user.is_superuser or getattr(user, "is_global_admin", False):
         return True
     membership = get_membership(user, project)
     return bool(membership and membership.role == ProjectMembership.Role.ADMIN)
 
 
 def is_project_member(user, project):
-    if user.is_superuser:
+    if user.is_superuser or getattr(user, "is_global_admin", False):
         return True
     return get_membership(user, project) is not None
 

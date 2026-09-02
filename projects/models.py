@@ -12,6 +12,10 @@ class Project(models.Model):
     members = models.ManyToManyField(
         settings.AUTH_USER_MODEL, through="ProjectMembership", related_name="projects"
     )
+    admin_only_chat = models.BooleanField(
+        default=False,
+        help_text="If true, only project admins may post in this project's group chat.",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
