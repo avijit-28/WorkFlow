@@ -417,6 +417,8 @@
   .wa-bubble.in{background:var(--bubble-in-bg);color:var(--bubble-in-text);border-top-left-radius:2px;}
   .wa-bubble.out{background:var(--bubble-out-bg);color:var(--bubble-out-text);border-top-right-radius:2px;}
   .wa-bubble-text{white-space:pre-wrap;word-break:break-word;}
+  .wa-bubble-text .chat-link{color:inherit;text-decoration:underline;text-underline-offset:2px;word-break:break-all;}
+  .wa-bubble-text .chat-link:hover{opacity:.85;}
   .wa-bubble-time{font-size:10px;opacity:.65;text-align:right;margin-top:2px;}
   .wa-bubble img, .wa-bubble video{max-width:100%;max-height:280px;border-radius:6px;display:block;margin-bottom:4px;cursor:pointer;background:#00000010;}
   .wa-file-chip{
@@ -1415,6 +1417,25 @@ async function enterApp() {
 function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+/* Turns plain-text URLs inside already-escaped text into clickable links
+   that open in a new tab. Must be called AFTER escapeHtml() so we never
+   inject unescaped user content as markup. */
+function linkifyText(escapedText) {
+  const urlPattern = /((?:https?:\/\/|www\.)[^\s<]+)/gi;
+  return escapedText.replace(urlPattern, (match) => {
+    let url = match;
+    // Don't swallow trailing punctuation that's likely not part of the URL
+    let trailing = '';
+    const trailingMatch = url.match(/[).,!?;:'"]+$/);
+    if (trailingMatch) {
+      trailing = trailingMatch[0];
+      url = url.slice(0, -trailing.length);
+    }
+    if (!url) return match;
+    const href = url.startsWith('www.') ? `https://${url}` : url;
+    return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="chat-link">${url}</a>${trailing}`;
+  });
+}
 function fmtDate(iso) {
   if (!iso) return '—';
   const d = new Date(iso);
@@ -2109,7 +2130,7 @@ function renderChatBubble(m) {
         </a>`;
     }
   }
-  const textHtml = m.content ? `<div class="wa-bubble-text">${escapeHtml(m.content)}</div>` : '';
+  const textHtml = m.content ? `<div class="wa-bubble-text">${linkifyText(escapeHtml(m.content))}</div>` : '';
   return `
     <div class="wa-bubble-row ${mine ? 'out' : 'in'}">
       <div class="wa-bubble ${mine ? 'out' : 'in'}">
