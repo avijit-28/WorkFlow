@@ -42,6 +42,28 @@ class ProjectMessage(models.Model):
         return f"[{self.project_id}] {self.sender.username}: {self.content[:30]}"
 
 
+class UserBlock(models.Model):
+    """
+    `blocker` has blocked `blocked` in DMs. While a block row exists (in
+    either direction) neither person can send new direct messages to the
+    other -- existing history stays visible. Only the blocker can remove it.
+    """
+
+    blocker = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="blocked_users"
+    )
+    blocked = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="blocked_by_users"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("blocker", "blocked")
+
+    def __str__(self):
+        return f"{self.blocker.username} blocked {self.blocked.username}"
+
+
 class DirectMessage(models.Model):
     """
     A 1-on-1 message between any two users in the system -- covers

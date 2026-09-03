@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from projects.permissions import is_project_admin, is_project_member
 from notifications.models import Notification
 
-from .models import DirectMessage, ProjectMessage
+from .models import DirectMessage, ProjectMessage, UserBlock
 from .serializers import DirectMessageSerializer, ProjectMessageSerializer
 
 User = get_user_model()
@@ -190,6 +190,13 @@ class DirectMessageListCreateView(generics.ListCreateAPIView):
         recipient_id = serializer.validated_data["recipient_id"]
         if recipient_id == request.user.id:
             return Response({"detail": "You cannot message yourself."}, status=status.HTTP_400_BAD_REQUEST)
+        if UserBlock.objects.filter(
+            Q(blocker=request.user, blocked_id=recipient_id) | Q(blocker_id=recipient_id, blocked=request.user)
+        ).exists():
+            return Response(
+                {"detail": "You can't send messages here right now — one of you has blocked the other."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         message = serializer.save(sender=request.user, recipient_id=recipient_id)
         _notify_direct_message(message)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -255,6 +262,77 @@ def _attachment_type_for(message):
     return _attachment_type(message.attachment)
 
 
+class DirectMessageDeleteConversationView(APIView):
+    """
+    POST /api/chat/direct-messages/delete-conversation/   body: {"with": <user_id>}
+    Removes an entire DM thread from MY chat list only -- every message in
+    it is hidden from my view (same "delete for me" mechanism as a single
+    message). The other person's copy is completely untouched, and if they
+    message me again the thread simply reappears with the new message.
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        other_id = request.data.get("with")
+        if not other_id:
+            return Response({"detail": "'with' (user id) is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+        messages = DirectMessage.objects.filter(
+            Q(sender=user, recipient_id=other_id) | Q(sender_id=other_id, recipient=user)
+        )
+        hidden_count = 0
+        for message in messages:
+            message.hidden_for.add(user)
+            hidden_count += 1
+        return Response({"hidden_count": hidden_count})
+
+
+class BlockUserView(APIView):
+    """
+    POST   /api/chat/block/   body: {"user_id": <id>}  -- block someone
+    DELETE /api/chat/block/   body: {"user_id": <id>}  -- unblock someone
+    While a block exists (in either direction) neither person can send new
+    DMs to the other (see DirectMessageListCreateView.create). Only the
+    person who created the block can remove it.
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        user_id = request.data.get("user_id")
+        if not user_id:
+            return Response({"detail": "user_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+        if str(user_id) == str(request.user.id):
+            return Response({"detail": "You cannot block yourself."}, status=status.HTTP_400_BAD_REQUEST)
+        if not User.objects.filter(id=user_id).exists():
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+        UserBlock.objects.get_or_create(blocker=request.user, blocked_id=user_id)
+        return Response({"blocked_by_me": True})
+
+    def delete(self, request):
+        user_id = request.data.get("user_id")
+        if not user_id:
+            return Response({"detail": "user_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+        UserBlock.objects.filter(blocker=request.user, blocked_id=user_id).delete()
+        return Response({"blocked_by_me": False})
+
+
+class BlockStatusView(APIView):
+    """GET /api/chat/block-status/?with=<user_id>"""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        other_id = request.query_params.get("with")
+        if not other_id:
+            return Response({"detail": "'with' query param is required."}, status=status.HTTP_400_BAD_REQUEST)
+        blocked_by_me = UserBlock.objects.filter(blocker=request.user, blocked_id=other_id).exists()
+        blocked_by_them = UserBlock.objects.filter(blocker_id=other_id, blocked=request.user).exists()
+        return Response({"blocked_by_me": blocked_by_me, "blocked_by_them": blocked_by_them})
+
+
 class ConversationListView(APIView):
     """
     GET /api/chat/conversations/
@@ -268,20 +346,21 @@ class ConversationListView(APIView):
         from accounts.serializers import UserSerializer
 
         user = request.user
+        visible_qs = DirectMessage.objects.exclude(hidden_for=user)
         partner_ids = set(
-            DirectMessage.objects.filter(sender=user).values_list("recipient_id", flat=True)
-        ) | set(DirectMessage.objects.filter(recipient=user).values_list("sender_id", flat=True))
+            visible_qs.filter(sender=user).values_list("recipient_id", flat=True)
+        ) | set(visible_qs.filter(recipient=user).values_list("sender_id", flat=True))
 
         results = []
         for pid in partner_ids:
             last = (
-                DirectMessage.objects.filter(
+                visible_qs.filter(
                     Q(sender=user, recipient_id=pid) | Q(sender_id=pid, recipient=user)
                 )
                 .order_by("-created_at")
                 .first()
             )
-            unread = DirectMessage.objects.filter(sender_id=pid, recipient=user, read_at__isnull=True).count()
+            unread = visible_qs.filter(sender_id=pid, recipient=user, read_at__isnull=True).count()
             other = User.objects.filter(id=pid).first()
             if not other or not last:
                 continue

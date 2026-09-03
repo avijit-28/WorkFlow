@@ -358,6 +358,40 @@
   .modal-close{cursor:pointer;font-size:22px;color:var(--muted);line-height:1;padding:4px;}
   .modal-close:hover{color:var(--text);}
 
+  /* ---------- custom confirm dialog (replaces window.confirm) ---------- */
+  .confirm-card{width:380px;text-align:center;padding:26px 24px 22px;}
+  .confirm-icon{
+    width:44px;height:44px;margin:0 auto 14px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:var(--red-dim);color:var(--red);
+  }
+  .confirm-icon.neutral{background:var(--blue-dim);color:var(--blue);}
+  .confirm-icon svg{width:22px;height:22px;}
+  .confirm-title{font-family:var(--sans);font-size:18px;font-weight:800;color:var(--text);margin-bottom:8px;}
+  .confirm-message{font-size:13.5px;color:var(--muted);line-height:1.5;margin-bottom:22px;white-space:pre-line;}
+  .confirm-actions{display:flex;gap:10px;justify-content:center;}
+  .confirm-actions .btn{flex:1;}
+
+  /* ---------- toast notifications (replaces window.alert) ---------- */
+  .toast-stack{
+    position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:200;
+    display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:min(92vw,420px);
+  }
+  .toast{
+    pointer-events:auto;width:100%;display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:10px;
+    background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow-lg);font-size:13px;color:var(--text);
+    animation:toast-in .18s ease both;
+  }
+  .toast.leaving{animation:toast-out .15s ease forwards;}
+  @keyframes toast-in{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes toast-out{to{opacity:0;transform:translateY(-8px);}}
+  .toast-icon{flex-shrink:0;width:18px;height:18px;margin-top:1px;}
+  .toast.error .toast-icon{color:var(--red);}
+  .toast.success .toast-icon{color:#1FA463;}
+  .toast.info .toast-icon{color:var(--blue);}
+  .toast-text{flex:1;line-height:1.4;}
+  .toast-close{flex-shrink:0;cursor:pointer;color:var(--muted);font-size:16px;line-height:1;padding:2px;}
+  .toast-close:hover{color:var(--text);}
+
   /* ---------- kanban board ---------- */
   .board-toggle{display:flex;gap:6px;margin-bottom:14px;}
   .board-toggle .tab{border:1px solid var(--line);border-radius:6px;padding:7px 13px;border-bottom:1px solid var(--line);background:var(--panel);}
@@ -390,6 +424,8 @@
   #conversationsList{overflow-y:auto;flex:1;margin-top:0 !important;padding:8px;gap:2px;}
 
   .wa-conv-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;cursor:pointer;transition:background .12s ease;}
+  .wa-conv-delete{opacity:0;transition:opacity .1s ease;flex-shrink:0;}
+  .wa-conv-item:hover .wa-conv-delete{opacity:1;}
   .wa-conv-item:hover{background:var(--panel-2);}
   .wa-conv-item.active{background:var(--blue-dim);}
   .wa-conv-text{flex:1;min-width:0;}
@@ -753,6 +789,24 @@
   <img id="imgLightboxImg" src="" alt="">
 </div>
 
+<!-- Custom confirm dialog (replaces window.confirm everywhere) -->
+<div class="modal-overlay hidden" id="confirmOverlay">
+  <div class="modal-card confirm-card">
+    <div class="confirm-icon" id="confirmIcon">
+      <svg viewBox="0 0 20 20" fill="none"><path d="M10 6.5v4.2M10 13.6h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/></svg>
+    </div>
+    <div class="confirm-title" id="confirmTitle"></div>
+    <div class="confirm-message" id="confirmMessage"></div>
+    <div class="confirm-actions">
+      <button type="button" class="btn secondary" id="confirmCancelBtn">Cancel</button>
+      <button type="button" class="btn danger" id="confirmOkBtn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast notifications (replaces window.alert everywhere) -->
+<div class="toast-stack" id="toastStack"></div>
+
 <!-- Floating per-message action menu (Delete for me / Delete for everyone) -->
 <div class="msg-action-menu hidden" id="msgActionMenu"></div>
 
@@ -771,6 +825,7 @@
       <div class="l">Email</div>
       <div class="v" id="profileInfoEmail"></div>
     </div>
+    <button type="button" class="btn secondary small block-toggle-btn" id="profileInfoBlockBtn" style="margin-top:14px;width:100%;"></button>
   </div>
 </div>
 
@@ -1102,6 +1157,7 @@
               </div>
             </div>
             <div class="wa-messages" id="dmMessageList"></div>
+            <div class="wa-locked-banner hidden" id="dmBlockedBanner"></div>
             <form id="dmForm" class="wa-input-bar">
               <input type="file" id="dmAttachInput" class="hidden">
               <button type="button" class="wa-attach-btn" id="dmAttachBtn" title="Attach a file">
@@ -1128,6 +1184,7 @@
             <div class="l">Email</div>
             <div class="v" id="waProfileEmail"></div>
           </div>
+          <button type="button" class="btn secondary small block-toggle-btn" id="waProfileBlockBtn" style="margin-top:14px;width:100%;"></button>
         </div>
       </div>
     </div>
@@ -1514,6 +1571,76 @@ async function enterApp() {
 function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+
+/* ============================================================
+   CUSTOM CONFIRM DIALOG (replaces window.confirm everywhere)
+   Usage: if (!(await confirmDialog({ title, message, tone: 'danger'|'neutral', confirmLabel }))) return;
+   ============================================================ */
+function confirmDialog({ title = 'Are you sure?', message = '', tone = 'danger', confirmLabel = 'Confirm', cancelLabel = 'Cancel' } = {}) {
+  return new Promise((resolve) => {
+    const overlay = $('#confirmOverlay');
+    const icon = $('#confirmIcon');
+    const okBtn = $('#confirmOkBtn');
+    const cancelBtn = $('#confirmCancelBtn');
+
+    $('#confirmTitle').textContent = title;
+    $('#confirmMessage').textContent = message;
+    icon.classList.toggle('neutral', tone !== 'danger');
+    okBtn.textContent = confirmLabel;
+    okBtn.className = `btn ${tone === 'danger' ? 'danger' : ''}`.trim();
+    cancelBtn.textContent = cancelLabel;
+
+    let settled = false;
+    function finish(result) {
+      if (settled) return;
+      settled = true;
+      overlay.classList.add('hidden');
+      okBtn.removeEventListener('click', onOk);
+      cancelBtn.removeEventListener('click', onCancel);
+      overlay.removeEventListener('click', onOverlay);
+      document.removeEventListener('keydown', onKey);
+      resolve(result);
+    }
+    function onOk() { finish(true); }
+    function onCancel() { finish(false); }
+    function onOverlay(e) { if (e.target === overlay) finish(false); }
+    function onKey(e) { if (e.key === 'Escape') finish(false); if (e.key === 'Enter') finish(true); }
+
+    okBtn.addEventListener('click', onOk);
+    cancelBtn.addEventListener('click', onCancel);
+    overlay.addEventListener('click', onOverlay);
+    document.addEventListener('keydown', onKey);
+    overlay.classList.remove('hidden');
+  });
+}
+
+/* ============================================================
+   TOAST NOTIFICATIONS (replaces window.alert everywhere)
+   Usage: showToast('Something went wrong', 'error')
+   ============================================================ */
+const TOAST_ICONS = {
+  error: '<path d="M10 6.5v4.2M10 13.6h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>',
+  success: '<path d="M5.5 10.5 8.5 13.5 14.5 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>',
+  info: '<path d="M10 8.8v4.4M10 6.2h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>',
+};
+function showToast(message, type = 'error', duration = 4500) {
+  const stack = $('#toastStack');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `
+    <svg class="toast-icon" viewBox="0 0 20 20" fill="none">${TOAST_ICONS[type] || TOAST_ICONS.info}</svg>
+    <div class="toast-text">${escapeHtml(message)}</div>
+    <span class="toast-close">&times;</span>
+  `;
+  const remove = () => {
+    el.classList.add('leaving');
+    setTimeout(() => el.remove(), 150);
+  };
+  el.querySelector('.toast-close').addEventListener('click', remove);
+  stack.appendChild(el);
+  setTimeout(remove, duration);
+}
+
 /* A project admin OR a global admin (state.user.role === 'admin') gets
    admin-level controls, mirroring the backend's is_project_admin(). */
 function isCurrentUserProjectAdmin() {
@@ -1639,7 +1766,7 @@ function renderBellList(items) {
         if (item) item.is_read = true;
         renderBellList(visibleBellItems());
         refreshBadges();
-      } catch (err) { alert('Could not mark as read: ' + err.message); }
+      } catch (err) { showToast('Could not mark as read: ' + err.message, 'error'); }
     });
   });
 }
@@ -1667,7 +1794,7 @@ $('#markAllReadBtn').addEventListener('click', async (e) => {
     renderBellList([]);
     $('#bellBadge').classList.add('hidden');
     $('#bellBadge').textContent = '0';
-  } catch (err) { alert('Could not mark all as read: ' + err.message); }
+  } catch (err) { showToast('Could not mark all as read: ' + err.message, 'error'); }
 });
 
 /* ============================================================
@@ -1799,13 +1926,18 @@ function renderProjectsList(filterText) {
       e.stopPropagation();
       const id = parseInt(btn.dataset.delproj);
       const proj = state.projects.find(pr => pr.id === id);
-      if (!confirm(`Delete "${proj ? proj.name : 'this project'}"? This removes all its tasks, chat, and submissions permanently.`)) return;
+      if (!(await confirmDialog({
+        title: 'Delete project?',
+        message: `Delete "${proj ? proj.name : 'this project'}"? This removes all its tasks, chat, and submissions permanently.`,
+        tone: 'danger',
+        confirmLabel: 'Delete',
+      }))) return;
       try {
         await api(`/api/projects/${id}/`, { method: 'DELETE' });
         state.projects = state.projects.filter(pr => pr.id !== id);
         renderProjectsList($('#projectSearchInput').value);
       } catch (err) {
-        alert('Could not delete project: ' + err.message);
+        showToast('Could not delete project: ' + err.message, 'error');
       }
     });
   });
@@ -1854,7 +1986,7 @@ async function openProject(id) {
     renderMembers(p.memberships || []);
     updateChatComposerLock();
   } catch (err) {
-    alert('Could not open project: ' + err.message);
+    showToast('Could not open project: ' + err.message, 'error');
   }
 }
 
@@ -1914,7 +2046,7 @@ $('#chatAdminOnlyToggle').addEventListener('change', async (e) => {
     state.currentProject.admin_only_chat = updated.admin_only_chat;
   } catch (err) {
     e.target.checked = !desired; // revert on failure
-    alert('Could not update chat setting: ' + err.message);
+    showToast('Could not update chat setting: ' + err.message, 'error');
   } finally {
     e.target.disabled = false;
     updateChatComposerLock();
@@ -2009,11 +2141,11 @@ function renderTasksList(projectId) {
   });
   $$('[data-deltask]').forEach(btn => {
     btn.addEventListener('click', async () => {
-      if (!confirm('Delete this task?')) return;
+      if (!(await confirmDialog({ title: 'Delete task?', message: 'This will permanently delete the task.', confirmLabel: 'Delete' }))) return;
       try {
         await api(`/api/tasks/${btn.dataset.deltask}/`, { method: 'DELETE' });
         loadTasks(projectId);
-      } catch (err) { alert('Delete failed: ' + err.message); }
+      } catch (err) { showToast('Delete failed: ' + err.message, 'error'); }
     });
   });
 }
@@ -2074,7 +2206,7 @@ function renderTasksBoard(projectId) {
       try {
         await updateTaskStatus(taskId, newStatus, projectId, oldStatus);
       } catch (err) {
-        alert('Could not move task: ' + err.message);
+        showToast('Could not move task: ' + err.message, 'error');
       }
     });
   });
@@ -2105,7 +2237,7 @@ async function updateTaskStatus(taskId, newStatus, projectId, oldStatus) {
     await refreshBadges();
     await loadTasks(projectId);
   } catch (err) {
-    alert('Update failed: ' + err.message);
+    showToast('Update failed: ' + err.message, 'error');
     await loadTasks(projectId);
   }
 }
@@ -2375,7 +2507,7 @@ $('#msgActionMenu').addEventListener('click', async (e) => {
   if (action === 'delete-me') {
     await hideMessagesForMe([id], context);
   } else if (action === 'delete-everyone') {
-    if (!confirm('Delete this message for everyone? This cannot be undone.')) return;
+    if (!(await confirmDialog({ title: 'Delete for everyone?', message: 'This message will be permanently removed for everyone. This cannot be undone.', confirmLabel: 'Delete' }))) return;
     await deleteMessageForEveryone(id, context);
   }
 });
@@ -2387,7 +2519,7 @@ async function hideMessagesForMe(ids, context) {
     await api(endpoint, { method: 'POST', body: { ids } });
     if (context === 'dm') loadDmThread(); else loadProjectChat();
   } catch (err) {
-    alert('Could not delete message(s): ' + err.message);
+    showToast('Could not delete message(s): ' + err.message, 'error');
   }
 }
 
@@ -2397,7 +2529,7 @@ async function deleteMessageForEveryone(id, context) {
     await api(endpoint, { method: 'DELETE' });
     if (context === 'group') loadProjectChat(); else loadDmThread();
   } catch (err) {
-    alert('Could not delete message: ' + err.message);
+    showToast('Could not delete message: ' + err.message, 'error');
   }
 }
 
@@ -2443,7 +2575,11 @@ $('#chatSelectCancelBtn').addEventListener('click', () => {
 $('#chatSelectDeleteBtn').addEventListener('click', async () => {
   const ids = Array.from(groupSelectedIds);
   if (!ids.length) return;
-  if (!confirm(`Delete ${ids.length} message${ids.length > 1 ? 's' : ''} for you? Other members will still see them.`)) return;
+  if (!(await confirmDialog({
+    title: 'Delete for you?',
+    message: `Delete ${ids.length} message${ids.length > 1 ? 's' : ''} for you? Other members will still see them.`,
+    confirmLabel: 'Delete',
+  }))) return;
   await hideMessagesForMe(ids, 'group');
   exitGroupSelectMode();
 });
@@ -2488,7 +2624,7 @@ $('#projectChatForm').addEventListener('submit', async (e) => {
     }
     loadProjectChat();
   } catch (err) {
-    alert('Could not send message: ' + err.message);
+    showToast('Could not send message: ' + err.message, 'error');
   }
 });
 
@@ -2498,6 +2634,7 @@ $('#projectChatForm').addEventListener('submit', async (e) => {
 let dmPollHandle = null;
 let dmCurrentUserId = null;
 let dmAttachedFile = null;
+let dmBlockStatus = { blocked_by_me: false, blocked_by_them: false };
 
 function stopDmPolling() {
   if (dmPollHandle) { clearInterval(dmPollHandle); dmPollHandle = null; }
@@ -2552,10 +2689,38 @@ async function loadConversations() {
           <span class="wa-conv-time">${fmtDate(c.last_message_at).split(' ').slice(-2).join(' ')}</span>
           ${c.unread_count > 0 ? `<span class="badge high">${c.unread_count}</span>` : ''}
         </div>
+        <button type="button" class="icon-btn danger wa-conv-delete" data-delconv="${c.user.id}" title="Delete conversation" onclick="event.stopPropagation()">
+          <svg viewBox="0 0 20 20" fill="none"><path d="M4 6h12M8 6V4.5A1.5 1.5 0 0 1 9.5 3h1A1.5 1.5 0 0 1 12 4.5V6m-6.5 0 .6 9.4A1.5 1.5 0 0 0 7.6 17h4.8a1.5 1.5 0 0 0 1.5-1.6L14.5 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
       </div>
     `).join('') || '<div class="empty">No conversations yet — tap + New to start one.</div>';
     $$('#conversationsList [data-dmuser]').forEach(el => {
       el.addEventListener('click', () => openDmThread(parseInt(el.dataset.dmuser)));
+    });
+    $$('#conversationsList [data-delconv]').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const otherId = parseInt(btn.dataset.delconv);
+        const convo = convos.find(c => c.user.id === otherId);
+        if (!(await confirmDialog({
+          title: 'Delete conversation?',
+          message: `Delete your conversation with ${convo ? convo.user.username : 'this user'}? It'll be removed from your chat list — they'll still see their side.`,
+          confirmLabel: 'Delete',
+        }))) return;
+        try {
+          await api('/api/chat/direct-messages/delete-conversation/', { method: 'POST', body: { with: otherId } });
+          if (dmCurrentUserId === otherId) {
+            dmCurrentUserId = null;
+            stopDmPolling();
+            $('#waShell').classList.remove('show-thread', 'show-profile');
+            $('#waThreadEmpty').classList.remove('hidden');
+            $('#waThreadActive').classList.add('hidden');
+          }
+          loadConversations();
+        } catch (err) {
+          showToast('Could not delete conversation: ' + err.message, 'error');
+        }
+      });
     });
   } catch (err) {
     $('#conversationsList').innerHTML = `<div class="msg error">${escapeHtml(err.message)}</div>`;
@@ -2578,6 +2743,13 @@ $('#waBackBtn').addEventListener('click', (e) => {
 function openDmThread(userId) {
   dmCurrentUserId = userId;
   const user = state.users.find(u => u.id === userId) || { id: userId, username: '?', role: '' };
+
+  // Reset to an unlocked default immediately; refreshDmBlockStatus() below
+  // corrects this once the real status comes back, avoiding a flash of the
+  // previous thread's locked/unlocked state.
+  dmBlockStatus = { blocked_by_me: false, blocked_by_them: false };
+  $('#dmBlockedBanner').classList.add('hidden');
+  $('#dmForm').classList.remove('hidden');
 
   $('#dmWithName').textContent = user.username;
   $('#dmWithRole').textContent = user.role || '';
@@ -2616,7 +2788,70 @@ function openDmThread(userId) {
   loadConversations();
   stopDmPolling();
   dmPollHandle = setInterval(loadDmThread, 4000);
+  refreshDmBlockStatus();
 }
+
+async function refreshDmBlockStatus() {
+  if (!dmCurrentUserId) return;
+  const forUserId = dmCurrentUserId;
+  try {
+    const data = await api(`/api/chat/block-status/?with=${forUserId}`);
+    if (dmCurrentUserId !== forUserId) return; // user switched threads while this was in flight
+    dmBlockStatus = data;
+  } catch (err) {
+    dmBlockStatus = { blocked_by_me: false, blocked_by_them: false };
+  }
+  updateDmBlockUI();
+}
+
+function updateDmBlockUI() {
+  const { blocked_by_me, blocked_by_them } = dmBlockStatus;
+  const user = state.users.find(u => u.id === dmCurrentUserId);
+  const name = user ? user.username : 'this user';
+
+  // Composer: locked if either side has blocked the other.
+  const locked = blocked_by_me || blocked_by_them;
+  const banner = $('#dmBlockedBanner');
+  if (blocked_by_me) {
+    banner.textContent = `🚫 You blocked ${name}. Unblock them to send messages.`;
+  } else if (blocked_by_them) {
+    banner.textContent = `🚫 You can't message ${name} right now.`;
+  }
+  banner.classList.toggle('hidden', !locked);
+  $('#dmForm').classList.toggle('hidden', locked);
+
+  // Block/Unblock button on both profile surfaces.
+  [$('#waProfileBlockBtn'), $('#profileInfoBlockBtn')].forEach(btn => {
+    if (blocked_by_them && !blocked_by_me) {
+      // They blocked me -- nothing for me to do here.
+      btn.classList.add('hidden');
+      return;
+    }
+    btn.classList.remove('hidden');
+    btn.textContent = blocked_by_me ? `Unblock ${name}` : `Block ${name}`;
+    btn.classList.toggle('danger', !blocked_by_me);
+    btn.classList.toggle('secondary', blocked_by_me);
+  });
+}
+
+async function toggleDmBlock() {
+  if (!dmCurrentUserId) return;
+  const willBlock = !dmBlockStatus.blocked_by_me;
+  if (willBlock && !(await confirmDialog({
+    title: 'Block this user?',
+    message: "They won't be able to message you until you unblock them.",
+    confirmLabel: 'Block',
+  }))) return;
+  try {
+    await api('/api/chat/block/', { method: willBlock ? 'POST' : 'DELETE', body: { user_id: dmCurrentUserId } });
+    dmBlockStatus.blocked_by_me = willBlock;
+    updateDmBlockUI();
+  } catch (err) {
+    showToast('Could not update block status: ' + err.message, 'error');
+  }
+}
+$('#waProfileBlockBtn').addEventListener('click', toggleDmBlock);
+$('#profileInfoBlockBtn').addEventListener('click', toggleDmBlock);
 
 $('#waThreadHeaderClickable').addEventListener('click', (e) => {
   if (e.target.closest('#waBackBtn')) return;
@@ -2677,7 +2912,7 @@ $('#dmForm').addEventListener('submit', async (e) => {
     loadDmThread();
     loadConversations();
   } catch (err) {
-    alert('Could not send message: ' + err.message);
+    showToast('Could not send message: ' + err.message, 'error');
   }
 });
 
