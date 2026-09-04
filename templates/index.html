@@ -179,10 +179,10 @@
   .topbar .btn.secondary:hover{background:var(--navy-2);border-color:var(--amber);color:var(--amber);}
 
   /* ---------- layout ---------- */
-  .layout{display:flex;min-height:calc(100vh - 5px);}
+  .layout{display:flex;min-height:92vh;}
   .sidebar{
     width:200px;flex-shrink:0;background:var(--navy);border-right:1px solid var(--navy-line);
-    padding:16px 10px;display:flex;flex-direction:column;gap:2px;
+    padding:16px 10px;display:flex;flex-direction:column;gap:2px; height:92vh;
   }
   .nav-item{
     display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:6px;color:var(--navy-muted);
@@ -192,7 +192,7 @@
   .nav-item.active{background:var(--amber-dim);color:var(--amber-hover);}
   .nav-icon{width:16px;height:16px;flex-shrink:0;color:inherit;}
   .nav-label{flex:1;}
-  .main{flex:1;padding:26px 32px;max-width:1300px;width:100%;}
+  .main{flex:1;padding:26px 32px;max-width:1300px;width:100%;height: 92vh;}
 
   h1{font-family:var(--sans);font-size:clamp(19px,3.6vw,23px);font-weight:800;margin:0 0 4px;letter-spacing:-0.01em;color:var(--text);}
   h2{font-family:var(--sans);font-size:15px;font-weight:700;margin:0 0 12px;color:var(--text);}
@@ -207,7 +207,7 @@
 
   /* ---------- fixed-size projects box (search + list, list scrolls internally) ---------- */
   .projects-box{
-    display:flex;flex-direction:column;height:520px;max-height:520px;overflow:hidden;
+    display:flex;flex-direction:column;height:600px;max-height:700px;overflow:hidden;
   }
   .projects-box .project-search{flex-shrink:0;max-width:none;margin-top:0;}
   .projects-box #projectsList{flex:1;min-height:0;overflow-y:auto;margin-top:14px;padding-right:2px;}
@@ -443,10 +443,10 @@
 
   .wa-thread{flex:1;display:flex;flex-direction:column;background:var(--chat-bg);position:relative;min-width:0;min-height:0;}
   .wa-thread-embedded{
-  height:600px !important;
-  min-height:400px !important;
-  max-height:400px !important;
-  flex:none !important;
+  height:calc(100vh - 300px);
+  min-height:460px;
+  max-height:720px;
+  flex:none;
   border:1px solid var(--line);
   border-radius:10px;
   overflow:hidden;
@@ -669,7 +669,40 @@
     #waShell.show-profile .wa-profile{width:0 !important;padding:0 !important;border-left:none;}
   }
 
-  @media (max-width:820px){
+  /* ============================================================
+     TABLET (821px–1180px): distinct from both the laptop/desktop
+     layout above and the bottom-nav phone layout below. The docked
+     sidebar stays (there's room for it) but everything is tightened
+     up, the 3-column grid drops to 2, form fields get the same
+     anti-zoom floor phones get, and the chat panes use a shallower
+     viewport offset than the desktop calc since tablet browser
+     chrome takes up less vertical space than a laptop window.
+     ============================================================ */
+  @media (min-width:769px) and (max-width:1024px){
+    .sidebar{width:172px;padding:14px 8px;}
+    .nav-item{padding:9px 10px;font-size:12.5px;gap:8px;}
+    .nav-icon{width:15px;height:15px;}
+    .main{padding:20px 22px;max-width:100%;}
+
+    h1{font-size:20px;}
+    .card{padding:16px;}
+    .grid.cols-3{grid-template-columns:repeat(2,1fr);}
+
+    /* Prevent Safari/Chrome-on-tablet from zooming the page in when
+       a form field is focused -- same fix already applied for phones. */
+    select, input[type=text], input[type=email], input[type=password],
+    input[type=datetime-local], input[type=file], textarea{
+      font-size:16px;
+    }
+
+    .wa-shell{height:calc(100vh - 20px);min-height:50px;}
+    .wa-thread-embedded{height:calc(100vh - 260px);min-height:420px;max-height:640px;}
+
+    .kanban-col{min-width:240px;}
+    .modal-card{width:420px;}
+  }
+
+  @media (max-width:768px){
     .layout{flex-direction:column;min-height:auto;}
     .main{
       padding:1px 13px calc(var(--dock-h) + 6px);
@@ -741,10 +774,10 @@
        fragile viewport-height arithmetic for this box specifically. */
     #view-messages{flex:1;display:flex;flex-direction:column;min-height:0;}
     .wa-shell{
-      flex:none !important;
-      height:600px !important;
-      min-height:500px !important;
-      max-height:500px !important;
+      flex:1 !important;
+      height: 600px !important;
+      min-height: 550px !important;
+      max-height:550px !important;
       border-radius:0;
       border-left:none;
       border-right:none;
@@ -763,15 +796,50 @@
     #view-project-detail{flex:1;display:flex;flex-direction:column;min-height:0;overflow-y:auto;}
     #pd-chat{flex:1;display:flex;flex-direction:column;min-height:0;}
     .wa-thread-embedded{
-      height:600px !important;
-      min-height:350px !important;
-      max-height:350px !important;
-      flex:none !important;
+      flex:1 !important;
+      height: 600px !important;
+      min-height: 450px !important;
+      max-height:450px !important;
       border-radius:0;
       border-left:none;
       border-right:none;
       margin:0;
     }
+
+    /* ---------- mobile polish: tabs, chat toolbar, composer ---------- */
+    .tabs{gap:0;margin-bottom:14px;}
+    .tab{padding:8px 10px;font-size:12.5px;}
+
+    .chat-setting-row{padding:9px 12px;gap:9px;}
+    .chat-setting-icon{width:28px;height:28px;border-radius:8px;}
+    .chat-setting-icon svg{width:13px;height:13px;}
+    .chat-setting-title{font-size:12px;}
+    .chat-setting-sub{font-size:10px;}
+    .switch{width:34px;height:20px;}
+    .switch-slider::before{height:14px;width:14px;left:3px;top:3px;}
+    .switch input:checked + .switch-slider::before{transform:translateX(14px);}
+
+    .wa-chat-actions-row{padding:7px 12px;}
+    .chat-select-btn{padding:5px 11px;font-size:11.5px;gap:5px;}
+    .chat-select-btn svg{width:12px;height:12px;}
+
+    .wa-select-toolbar{padding:8px 12px;}
+    .wa-select-toolbar-left{gap:8px;}
+    .wa-select-close-btn{width:24px;height:24px;}
+    .wa-select-count-badge{min-width:20px;height:20px;font-size:11px;}
+    .wa-select-label{font-size:12px;}
+    .wa-select-delete-btn{padding:6px 11px;font-size:11.5px;gap:5px;}
+    .wa-select-delete-btn svg{width:12px;height:12px;}
+
+    .wa-messages{padding:12px;gap:5px;}
+    .wa-bubble{font-size:13px;padding:6px 8px 5px;}
+    .msg-dots-btn{opacity:1;width:20px;height:20px;}
+    .msg-dots-btn svg{width:13px;height:13px;}
+
+    .wa-input-bar{padding:8px 10px;gap:6px;}
+    .wa-input-bar input[type=text]{min-height:38px;padding:9px 14px;}
+    .wa-attach-btn, .wa-send-btn{width:34px;height:34px;}
+    .wa-attach-btn svg, .wa-send-btn svg{width:17px;height:17px;}
   }
 
   @media (max-width:420px){
@@ -1167,7 +1235,7 @@
               <button type="button" class="wa-attach-btn" id="projectChatAttachBtn" title="Attach a file">
                 <svg viewBox="0 0 20 20" fill="none"><path d="M14.5 7.5 8.4 13.6a3 3 0 1 1-4.24-4.24L10.6 3a2 2 0 1 1 2.83 2.83l-6.36 6.36a1 1 0 1 1-1.41-1.42l5.66-5.65" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
-              <input type="text" id="projectChatInput" placeholder="Message the project team…" autocomplete="off">
+              <input type="text" id="projectChatInput" placeholder="Message in project..." autocomplete="off">
               <button class="wa-send-btn" type="submit" title="Send">
                 <svg viewBox="0 0 20 20" fill="none"><path d="M2.5 10 17 3l-5 14-3-6-6-1Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
               </button>
